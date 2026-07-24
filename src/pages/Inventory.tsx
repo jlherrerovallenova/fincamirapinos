@@ -380,42 +380,42 @@ export default function Inventory() {
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-center border-collapse">
                   <thead>
                     <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                      <th className="py-4 px-6">Nº Vivienda</th>
-                      <th className="py-4 px-6">Modelo</th>
-                      <th className="py-4 px-6">Superficie Parcela</th>
-                      <th className="py-4 px-6">Sup. Útil / Constr.</th>
-                      <th className="py-4 px-6">Hab / Baños</th>
-                      <th className="py-4 px-6">Precio</th>
-                      <th className="py-4 px-6">Estado</th>
-                      <th className="py-4 px-6 text-right">Acciones</th>
+                      <th className="py-4 px-6 text-center">Nº Vivienda</th>
+                      <th className="py-4 px-6 text-center">Modelo</th>
+                      <th className="py-4 px-6 text-center">Superficie Parcela</th>
+                      <th className="py-4 px-6 text-center">Sup. Útil / Constr.</th>
+                      <th className="py-4 px-6 text-center">Hab / Baños</th>
+                      <th className="py-4 px-6 text-center">Precio</th>
+                      <th className="py-4 px-6 text-center">Estado</th>
+                      <th className="py-4 px-6 text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-sm">
                     {filteredProperties.map((property) => (
                       <tr key={property.id} className="hover:bg-slate-50/60 transition-colors group">
-                        <td className="py-4 px-6 font-bold text-slate-900">
+                        <td className="py-4 px-6 font-bold text-slate-900 text-center">
                           <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-800 font-black text-xs">
                             {property.numero_vivienda}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-bold text-slate-800">{property.modelo}</td>
-                        <td className="py-4 px-6 text-slate-600 font-medium">{property.superficie_parcela ? `${property.superficie_parcela} m²` : '-'}</td>
-                        <td className="py-4 px-6 text-slate-600 font-medium">
+                        <td className="py-4 px-6 font-bold text-slate-800 text-center">{property.modelo}</td>
+                        <td className="py-4 px-6 text-slate-600 font-medium text-center">{property.superficie_parcela ? `${property.superficie_parcela} m²` : '-'}</td>
+                        <td className="py-4 px-6 text-slate-600 font-medium text-center">
                           {property.superficie_util ? `${property.superficie_util} m²` : '-'} / {property.superficie_construida ? `${property.superficie_construida} m²` : '-'}
                         </td>
-                        <td className="py-4 px-6 text-slate-600 font-medium">
-                          <div className="flex items-center gap-3">
+                        <td className="py-4 px-6 text-slate-600 font-medium text-center">
+                          <div className="flex items-center justify-center gap-3">
                             <span className="flex items-center gap-1 text-slate-700 font-semibold"><BedDouble size={15} className="text-slate-400" /> {property.habitaciones || 0}</span>
                             <span className="flex items-center gap-1 text-slate-700 font-semibold"><Bath size={15} className="text-slate-400" /> {property.banos || 0}</span>
                           </div>
                         </td>
-                        <td className="py-4 px-6 font-bold text-slate-900">
+                        <td className="py-4 px-6 font-bold text-slate-900 text-center">
                           {property.precio ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(property.precio) : '-'}
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="py-4 px-6 text-center">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             property.estado_vivienda === 'DISPONIBLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
                             property.estado_vivienda === 'RESERVADA' ? 'bg-amber-50 text-amber-700 border border-amber-200/60' :
@@ -425,8 +425,8 @@ export default function Inventory() {
                             {property.estado_vivienda || 'DISPONIBLE'}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex items-center justify-center gap-1 opacity-90 group-hover:opacity-100">
                             <button
                               onClick={() => {
                                 setEditingProperty(property);
