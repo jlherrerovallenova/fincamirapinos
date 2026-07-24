@@ -272,161 +272,198 @@ export default function Inventory() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* CABECERA DE PÁGINA */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-            <Home size={36} className="text-[#006c4a]" />
+      {isModalOpen ? (
+        <CreatePropertyModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingProperty(null);
+          }}
+          onSuccess={() => {
+            fetchProperties();
+            setIsModalOpen(false);
+            setEditingProperty(null);
+          }}
+          initialData={editingProperty}
+          isInline={true}
+        />
+      ) : (
+        <>
+          {/* CABECERA DE PÁGINA */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                <Home size={36} className="text-[#006c4a]" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Inventario de Viviendas</h2>
+                <p className="text-slate-500 text-xs font-semibold mt-1">Gestión profesional del catálogo de activos, modelos y planos.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
+              <button
+                onClick={handleExportPDF}
+                disabled={loading || isExporting || filteredProperties.length === 0}
+                className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-3 rounded-2xl font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 min-w-[150px]"
+                title="Descargar Listado PDF"
+              >
+                {isExporting ? <Loader2 className="animate-spin text-emerald-600" size={20} /> : <FileText size={20} className="text-red-500" />}
+                {isExporting ? 'Generando...' : 'Exportar PDF'}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingProperty(null);
+                  setIsModalOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 bg-[#006c4a] text-white hover:bg-[#005137] px-6 py-3 rounded-2xl font-bold shadow-md shadow-emerald-900/10 transition-all active:scale-95"
+              >
+                <Plus size={20} />
+                Nueva Propiedad
+              </button>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Inventario de Viviendas</h2>
-            <p className="text-slate-500 text-xs font-semibold mt-1">Gestión profesional del catálogo de activos, modelos y planos.</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
-          <button
-            onClick={handleExportPDF}
-            disabled={loading || isExporting || filteredProperties.length === 0}
-            className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-3 rounded-2xl font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 min-w-[150px]"
-            title="Descargar Listado PDF"
-          >
-            {isExporting ? <Loader2 className="animate-spin text-emerald-600" size={20} /> : <FileText size={20} className="text-red-500" />}
-            {isExporting ? 'Generando...' : 'Exportar PDF'}
-          </button>
-          <button
-            onClick={() => {
-              setEditingProperty(null);
-              setIsModalOpen(true);
-            }}
-            className="flex items-center justify-center gap-2 bg-[#006c4a] hover:bg-[#005137] text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
-          >
-            <Plus size={20} />
-            Añadir Propiedad
-          </button>
-        </div>
-      </div>
 
-      {/* Buscador y Filtros */}
-      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder="Buscar por modelo o número de vivienda..."
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-medium text-slate-700"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+          {/* BARRA DE BÚSQUEDA Y FILTROS */}
+          <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar por modelo o nº vivienda..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium transition-all"
+              />
+            </div>
 
-        <div className="relative w-full md:w-64">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <select
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            className="w-full pl-12 pr-8 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 outline-none appearance-none cursor-pointer text-slate-700 font-medium font-bold"
-          >
-            <option value="">Cualquier Estado</option>
-            <option value="DISPONIBLE">DISPONIBLE</option>
-            <option value="NO DISPONIBLE">NO DISPONIBLE</option>
-            <option value="BLOQUEADA">BLOQUEADA</option>
-            <option value="RESERVADA">RESERVADA</option>
-            <option value="CONTRATO CV">CONTRATO CV</option>
-            <option value="ESCRITURADA">ESCRITURADA</option>
-          </select>
-        </div>
-      </div>
+            <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+              <Filter size={16} className="text-slate-400 shrink-0 ml-2" />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">Estado:</span>
+              <button
+                onClick={() => setStateFilter('')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                  stateFilter === '' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Todos ({properties.length})
+              </button>
+              {['DISPONIBLE', 'RESERVADA', 'BLOQUEADA', 'CONTRATO CV', 'ESCRITURADA', 'NO DISPONIBLE'].map((st) => {
+                const count = properties.filter(p => p.estado_vivienda === st).length;
+                if (count === 0 && stateFilter !== st) return null;
+                return (
+                  <button
+                    key={st}
+                    onClick={() => setStateFilter(st)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                      stateFilter === st ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {st} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="animate-spin text-emerald-600" size={40} />
-            <p className="text-slate-400 font-medium">Cargando inventario...</p>
-          </div>
-        ) : filteredProperties.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Vivienda</th>
-                  <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Modelo</th>
-                  <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Hab / Baños</th>
-                  <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Precio</th>
-                  <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredProperties.map((property) => (
-                  <tr key={property.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                          {property.numero_vivienda}
-                        </div>
-                        <span className="font-bold text-slate-900">Urb. Mirapinos</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 font-semibold text-slate-600">{property.modelo}</td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-4 text-slate-500">
-                        <div className="flex items-center gap-1.5">
-                          <BedDouble size={16} />
-                          <span className="font-bold">{property.habitaciones}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Bath size={16} />
-                          <span className="font-bold">{property.banos}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="inline-flex px-3 py-1 rounded-lg bg-slate-900 text-white font-bold text-sm">
-                        {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(property.precio || 0)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleClone(property)}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                          title="Clonar Vivienda"
-                        >
-                          <Copy size={18} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingProperty(property);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                          title="Editar"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => setPropertyToDelete(property)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                          title="Borrar"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-20 text-center flex flex-col items-center">
-            <Home size={40} className="text-slate-200 mb-4" />
-            <p className="text-slate-500 font-bold">No se encontraron propiedades</p>
-          </div>
-        )}
-      </div>
+          {/* TABLA DE PROPIEDADES */}
+          {loading ? (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-sm">
+              <Loader2 className="animate-spin mx-auto text-emerald-600 mb-4" size={32} />
+              <p className="text-slate-500 font-medium text-sm">Cargando catálogo de inventario...</p>
+            </div>
+          ) : filteredProperties.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-sm">
+              <Home className="mx-auto text-slate-300 mb-4" size={48} />
+              <h3 className="text-lg font-bold text-slate-800">No se encontraron viviendas</h3>
+              <p className="text-slate-500 text-xs font-medium mt-1">Prueba a ajustar los criterios de búsqueda o añade una nueva propiedad.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                      <th className="py-4 px-6">Nº Vivienda</th>
+                      <th className="py-4 px-6">Modelo</th>
+                      <th className="py-4 px-6">Superficie Parcela</th>
+                      <th className="py-4 px-6">Sup. Útil / Constr.</th>
+                      <th className="py-4 px-6">Hab / Baños</th>
+                      <th className="py-4 px-6">Precio</th>
+                      <th className="py-4 px-6">Estado</th>
+                      <th className="py-4 px-6 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {filteredProperties.map((property) => (
+                      <tr key={property.id} className="hover:bg-slate-50/60 transition-colors group">
+                        <td className="py-4 px-6 font-bold text-slate-900">
+                          <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-800 font-black text-xs">
+                            {property.numero_vivienda}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 font-bold text-slate-800">{property.modelo}</td>
+                        <td className="py-4 px-6 text-slate-600 font-medium">{property.superficie_parcela ? `${property.superficie_parcela} m²` : '-'}</td>
+                        <td className="py-4 px-6 text-slate-600 font-medium">
+                          {property.superficie_util ? `${property.superficie_util} m²` : '-'} / {property.superficie_construida ? `${property.superficie_construida} m²` : '-'}
+                        </td>
+                        <td className="py-4 px-6 text-slate-600 font-medium">
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1 text-slate-700 font-semibold"><BedDouble size={15} className="text-slate-400" /> {property.habitaciones || 0}</span>
+                            <span className="flex items-center gap-1 text-slate-700 font-semibold"><Bath size={15} className="text-slate-400" /> {property.banos || 0}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 font-bold text-slate-900">
+                          {property.precio ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(property.precio) : '-'}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            property.estado_vivienda === 'DISPONIBLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
+                            property.estado_vivienda === 'RESERVADA' ? 'bg-amber-50 text-amber-700 border border-amber-200/60' :
+                            property.estado_vivienda === 'BLOQUEADA' || property.estado_vivienda === 'NO DISPONIBLE' ? 'bg-red-50 text-red-700 border border-red-200/60' :
+                            'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}>
+                            {property.estado_vivienda || 'DISPONIBLE'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
+                            <button
+                              onClick={() => handleClone(property)}
+                              className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                              title="Clonar propiedad"
+                            >
+                              <Copy size={17} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingProperty(property);
+                                setIsModalOpen(true);
+                              }}
+                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                              title="Editar propiedad"
+                            >
+                              <Edit2 size={17} />
+                            </button>
+                            <button
+                              onClick={() => setPropertyToDelete(property)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                              title="Eliminar propiedad"
+                            >
+                              <Trash2 size={17} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
-      {/* Modal de Confirmación de Borrado Profesional */}
+      {/* CONFIRMACIÓN DE BORRADO */}
       {propertyToDelete && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -457,21 +494,6 @@ export default function Inventory() {
             </div>
           </div>
         </div>
-      )}
-
-      {isModalOpen && (
-        <CreatePropertyModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingProperty(null);
-          }}
-          onSuccess={() => {
-            fetchProperties();
-            setIsModalOpen(false);
-          }}
-          initialData={editingProperty}
-        />
       )}
     </div>
   );
