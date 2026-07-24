@@ -405,20 +405,26 @@ export default function Inventory() {
                           </span>
                         </td>
                         <td className="py-4 px-6 text-center">
-                          <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
-                            property.modelo.toUpperCase().includes('OLIVO')
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
-                              : property.modelo.toUpperCase().includes('ARCE')
-                                ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
-                                : 'bg-blue-50 text-blue-800 border border-blue-200/80'
-                          }`}>
-                            {property.modelo.toUpperCase().includes('OLIVO') ? (
-                              <Trees size={15} className="text-emerald-600 shrink-0" />
-                            ) : property.modelo.toUpperCase().includes('ARCE') ? (
-                              <Leaf size={15} className="text-amber-600 shrink-0" />
-                            ) : null}
-                            <span>{property.modelo}</span>
-                          </span>
+                          {(() => {
+                            const upper = property.modelo.toUpperCase();
+                            const isOlivo = upper.includes('OLIVO');
+                            const isParcela = upper.includes('PARCELA');
+                            const isArce = !isParcela && upper.includes('ARCE');
+
+                            return (
+                              <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
+                                isOlivo
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                                  : isArce
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
+                                    : 'bg-blue-50 text-blue-800 border border-blue-200/80'
+                              }`}>
+                                {isOlivo && <Trees size={15} className="text-emerald-600 shrink-0" />}
+                                {isArce && <Leaf size={15} className="text-amber-600 shrink-0" />}
+                                <span>{property.modelo}</span>
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-4 px-6 text-slate-600 font-medium text-center">{property.superficie_parcela ? `${property.superficie_parcela} m²` : '-'}</td>
                         <td className="py-4 px-6 text-slate-600 font-medium text-center">

@@ -156,9 +156,9 @@ export default function CreatePropertyModal({ isOpen, onClose, onSuccess, initia
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modelo</label>
               <div className="relative mt-1.5">
-                {formData.modelo.includes('OLIVO') ? (
+                {formData.modelo.toUpperCase().includes('OLIVO') ? (
                   <Trees className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600" size={18} />
-                ) : formData.modelo.includes('ARCE') ? (
+                ) : (!formData.modelo.toUpperCase().includes('PARCELA') && formData.modelo.toUpperCase().includes('ARCE')) ? (
                   <Leaf className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600" size={18} />
                 ) : (
                   <Home className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />

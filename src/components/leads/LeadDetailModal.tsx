@@ -730,8 +730,10 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                         <div className="flex flex-wrap gap-2 mt-0.5">
                           {INTERESTED_OPTIONS.map(option => {
                             const isSelected = formData.interested_in.split(', ').includes(option.value);
-                            const isOlivo = option.value.toUpperCase().includes('OLIVO');
-                            const isArce = option.value.toUpperCase().includes('ARCE');
+                            const upper = option.value.toUpperCase();
+                            const isOlivo = upper.includes('OLIVO');
+                            const isParcela = upper.includes('PARCELA');
+                            const isArce = !isParcela && upper.includes('ARCE');
                             return (
                               <button
                                 key={option.value}
