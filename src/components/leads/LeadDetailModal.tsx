@@ -431,7 +431,9 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
   const statusCfg = STATUS_CONFIG[formData.status || 'new'] || STATUS_CONFIG['new'];
 
   const content = (
-    <div className="bg-white w-full rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col animate-in fade-in duration-300 min-h-[600px]">
+    <div className={`bg-white w-full flex flex-col animate-in fade-in duration-300 min-h-[600px] ${
+      isInline ? 'rounded-2xl border border-slate-200/40 shadow-sm' : 'rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden'
+    }`}>
       {/* HEADER claro y limpio sin fondo verde */}
       <div className="px-6 sm:px-8 py-5 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 relative border-b border-slate-200/80">
         <div className="flex items-center gap-5">

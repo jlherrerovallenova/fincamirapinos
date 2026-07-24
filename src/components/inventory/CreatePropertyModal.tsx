@@ -122,7 +122,7 @@ export default function CreatePropertyModal({ isOpen, onClose, onSuccess, initia
   };
 
   const content = (
-    <div className="bg-white w-full rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden animate-in fade-in duration-300">
+    <div className="bg-white w-full rounded-2xl border border-slate-200/40 shadow-sm overflow-hidden animate-in fade-in duration-300">
       {/* Header Claro */}
       <div className="px-6 py-5 border-b border-slate-200/80 flex items-center justify-between bg-slate-50 shrink-0">
         <div className="flex items-center gap-3.5">
