@@ -732,6 +732,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                             const isSelected = formData.interested_in.split(', ').includes(option.value);
                             const isOlivo = option.value.toUpperCase().includes('OLIVO');
                             const isArce = option.value.toUpperCase().includes('ARCE');
+                            const isParcela = option.value.toUpperCase().includes('PARCELA');
                             return (
                               <button
                                 key={option.value}
@@ -739,12 +740,13 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                                 onClick={() => handleInterestedInToggle(option.value)}
                                 className={`px-3.5 py-1 rounded-full text-xs font-bold transition-all border flex items-center gap-1.5 ${
                                   isSelected
-                                    ? 'bg-[#006c4a] text-white border-[#006c4a] shadow-sm'
+                                    ? 'bg-[#006c4a] text-[#ffffff] border-[#006c4a] shadow-sm'
                                     : 'bg-white text-slate-600 border-slate-200 hover:border-[#006c4a] hover:text-[#006c4a]'
                                 }`}
                               >
                                 {isOlivo && <Trees size={14} className={isSelected ? 'text-emerald-200' : 'text-emerald-600'} />}
                                 {isArce && <Leaf size={14} className={isSelected ? 'text-amber-200' : 'text-amber-600'} />}
+                                {isParcela && <Compass size={14} className={isSelected ? 'text-blue-200' : 'text-blue-600'} />}
                                 <span>{option.label}</span>
                               </button>
                             );
