@@ -416,9 +416,7 @@ export default function Inventory() {
                               <Trees size={15} className="text-emerald-600 shrink-0" />
                             ) : property.modelo.toUpperCase().includes('ARCE') ? (
                               <Leaf size={15} className="text-amber-600 shrink-0" />
-                            ) : (
-                              <Compass size={15} className="text-blue-600 shrink-0" />
-                            )}
+                            ) : null}
                             <span>{property.modelo}</span>
                           </span>
                         </td>

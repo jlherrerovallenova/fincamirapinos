@@ -749,7 +749,6 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                               >
                                 {isOlivo && <Trees size={14} className={isSelected ? 'text-emerald-200' : 'text-emerald-600'} />}
                                 {isArce && <Leaf size={14} className={isSelected ? 'text-amber-200' : 'text-amber-600'} />}
-                                {!isOlivo && !isArce && <Compass size={14} className={isSelected ? 'text-blue-200' : 'text-blue-600'} />}
                                 <span>{option.label}</span>
                               </button>
                             );
