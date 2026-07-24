@@ -428,13 +428,6 @@ export default function Inventory() {
                         <td className="py-4 px-6 text-right">
                           <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
                             <button
-                              onClick={() => handleClone(property)}
-                              className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                              title="Clonar propiedad"
-                            >
-                              <Copy size={17} />
-                            </button>
-                            <button
                               onClick={() => {
                                 setEditingProperty(property);
                                 setIsModalOpen(true);
