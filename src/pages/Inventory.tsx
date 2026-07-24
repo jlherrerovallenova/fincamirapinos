@@ -296,7 +296,7 @@ export default function Inventory() {
                 <Home size={36} className="text-[#006c4a]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Inventario de Viviendas</h2>
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Viviendas</h2>
                 <p className="text-slate-500 text-xs font-semibold mt-1">Gestión profesional del catálogo de activos, modelos y planos.</p>
               </div>
             </div>
