@@ -95,7 +95,7 @@ export default function CreateLeadView({ onClose, onSuccess }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/40 shadow-sm overflow-hidden animate-in fade-in duration-300">
+    <div className="bg-white rounded-2xl border-none shadow-none overflow-hidden animate-in fade-in duration-300">
       {/* Cabecera con botón Volver */}
       <div className="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
         <div className="flex items-center gap-3">

@@ -432,7 +432,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
 
   const content = (
     <div className={`bg-white w-full flex flex-col animate-in fade-in duration-300 min-h-[600px] ${
-      isInline ? 'rounded-2xl border border-slate-200/40 shadow-sm' : 'rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden'
+      isInline ? 'border-none shadow-none rounded-none' : 'rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden'
     }`}>
       {/* HEADER claro y limpio sin fondo verde */}
       <div className="px-6 sm:px-8 py-5 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 relative border-b border-slate-200/80">
@@ -591,10 +591,10 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
           </div>
 
           {/* CONTENIDO PRINCIPAL */}
-          <div className="flex-1 overflow-y-auto lg:overflow-hidden bg-slate-50 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto lg:overflow-hidden bg-white flex flex-col min-h-0">
             {activeTab === 'info' ? (
-              <div className="p-2 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                <div className="w-full bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+              <div className="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar space-y-4">
+                <div className="w-full bg-white p-0">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1.5 text-[#006c4a]">
                       Información Personal
                     </h3>
