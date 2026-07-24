@@ -410,18 +410,14 @@ export default function Inventory() {
                               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
                               : property.modelo.toUpperCase().includes('ARCE')
                                 ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
-                                : property.modelo.toUpperCase().includes('PARCELA')
-                                  ? 'bg-blue-50 text-blue-800 border border-blue-200/80'
-                                  : 'bg-slate-100 text-slate-800 border border-slate-200'
+                                : 'bg-blue-50 text-blue-800 border border-blue-200/80'
                           }`}>
                             {property.modelo.toUpperCase().includes('OLIVO') ? (
                               <Trees size={15} className="text-emerald-600 shrink-0" />
                             ) : property.modelo.toUpperCase().includes('ARCE') ? (
                               <Leaf size={15} className="text-amber-600 shrink-0" />
-                            ) : property.modelo.toUpperCase().includes('PARCELA') ? (
-                              <Compass size={15} className="text-blue-600 shrink-0" />
                             ) : (
-                              <Home size={15} className="text-slate-400 shrink-0" />
+                              <Compass size={15} className="text-blue-600 shrink-0" />
                             )}
                             <span>{property.modelo}</span>
                           </span>
