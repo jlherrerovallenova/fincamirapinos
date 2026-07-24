@@ -41,11 +41,12 @@ interface Props {
   lead: Lead;
   onClose: () => void;
   onUpdate: (deleted?: boolean) => void;
+  isInline?: boolean;
 }
 
 import { useUpdateLead } from '../../hooks/useLeads';
 
-export default function LeadDetailModal({ lead, onClose, onUpdate }: Props) {
+export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = true }: Props) {
   const { session, profile } = useAuth();
   const { showAlert, showConfirm } = useDialog();
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -429,106 +430,121 @@ export default function LeadDetailModal({ lead, onClose, onUpdate }: Props) {
 
   const statusCfg = STATUS_CONFIG[formData.status || 'new'] || STATUS_CONFIG['new'];
 
-  return (
-    <>
-      <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden h-[680px] max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200 border border-slate-200">
-
-          {/* HEADER oscuro con avatar de color y botones de acción rápida */}
-          <div className="px-8 py-3.5 bg-[#131b2e] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 relative">
-            <div className="flex items-center gap-6">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg border-4 border-[#131b2e] ring-2 ring-emerald-500/30 shrink-0 ${getAvatarStyle(formData.name)}`}>
-                {formData.name.substring(0, 2).toUpperCase() || 'CL'}
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-3 mb-1">
-                  <h2 className="text-xl font-bold text-white leading-tight">{formData.name}</h2>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusCfg.pill}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                    {statusCfg.label}
-                  </span>
-                </div>
-                <p className="text-slate-400 text-xs font-medium mt-0.5">Ficha del Cliente</p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {/* WHATSAPP */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setComposerConfig({ method: 'whatsapp' });
-                      setIsEmailModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 border border-white/20 hover:bg-white/10 text-white rounded-lg transition-all text-xs font-semibold uppercase tracking-wider"
-                  >
-                    <MessageCircle size={14} />
-                    <span>WhatsApp</span>
-                  </button>
-
-                  {/* EMAIL */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setComposerConfig({ method: 'email' });
-                      setIsEmailModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 border border-white/20 hover:bg-white/10 text-white rounded-lg transition-all text-xs font-semibold uppercase tracking-wider"
-                  >
-                    <Mail size={14} />
-                    <span>Email</span>
-                  </button>
-
-                  {/* 1ER CONTACTO */}
-                  <button
-                    type="button"
-                    disabled={tasks.length > 0}
-                    onClick={() => {
-                      const agentName = profile?.full_name || 'Juan Herrero';
-                      setComposerConfig({
-                        method: 'whatsapp',
-                        subject: 'Información Finca Mirapinos',
-                        message: `Hola ${formData.name.split(' ')[0]},\n\nSoy ${agentName} de Terravall inmobiliaria. Nos ha solicitado información de la promoción inmobiliaria FINCA MIRAPINOS. ¿En qué puedo ayudarle?`
-                      });
-                      setIsEmailModalOpen(true);
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-all text-xs font-semibold uppercase tracking-wider ${
-                      tasks.length > 0
-                        ? 'border-white/10 text-white/40 cursor-not-allowed opacity-50'
-                        : 'border-white/20 hover:bg-white/10 text-white'
-                    }`}
-                    title={tasks.length > 0 ? "El cliente ya tiene actividad en su agenda" : "Enviar mensaje de primer contacto"}
-                  >
-                    <Zap size={14} />
-                    <span>1er Contacto</span>
-                  </button>
-
-                  {/* ENCUESTA */}
-                  <button
-                    type="button"
-                    onClick={() => setIsFeedbackModalOpen(true)}
-                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-all text-xs font-semibold uppercase tracking-wider ${
-                      (lead as any).feedback_rating
-                        ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                        : (lead as any).feedback_sent
-                          ? 'border-amber-500/50 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
-                          : 'border-white/20 hover:bg-white/10 text-white'
-                    }`}
-                    title={
-                      (lead as any).feedback_rating
-                        ? `Valoración recibida: ${(lead as any).feedback_rating}`
-                        : (lead as any).feedback_sent
-                          ? 'Encuesta enviada, pendiente de respuesta'
-                          : 'Enviar encuesta de satisfacción'
-                    }
-                  >
-                    <Send size={14} />
-                    <span>Encuesta</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white self-start md:self-center">
-              <X size={24} />
-            </button>
+  const content = (
+    <div className="bg-white w-full rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col animate-in fade-in duration-300 min-h-[600px]">
+      {/* HEADER claro y limpio sin fondo verde */}
+      <div className="px-6 sm:px-8 py-5 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 relative border-b border-slate-200/80">
+        <div className="flex items-center gap-5">
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg border border-slate-200/80 bg-white shrink-0 shadow-sm ${getAvatarStyle(formData.name)}`}>
+            {formData.name.substring(0, 2).toUpperCase() || 'CL'}
           </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{formData.name}</h2>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusCfg.pill}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                {statusCfg.label}
+              </span>
+            </div>
+            <p className="text-slate-500 text-xs font-semibold mt-0.5">Ficha del Cliente</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {/* WHATSAPP */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsFeedbackModalOpen(false);
+                  setComposerConfig({ method: 'whatsapp' });
+                  setIsEmailModalOpen(true);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-2 border rounded-xl transition-all text-xs font-bold uppercase tracking-wider shadow-sm ${
+                  isEmailModalOpen && composerConfig.method === 'whatsapp' && !composerConfig.subject?.includes('Información')
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md font-extrabold'
+                    : 'bg-white text-emerald-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-200'
+                }`}
+              >
+                <MessageCircle size={15} />
+                <span>WhatsApp</span>
+              </button>
+
+              {/* EMAIL */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsFeedbackModalOpen(false);
+                  setComposerConfig({ method: 'email' });
+                  setIsEmailModalOpen(true);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-2 border rounded-xl transition-all text-xs font-bold uppercase tracking-wider shadow-sm ${
+                  isEmailModalOpen && composerConfig.method === 'email'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md font-extrabold'
+                    : 'bg-white text-blue-700 border-slate-200 hover:bg-blue-50 hover:border-blue-200'
+                }`}
+              >
+                <Mail size={15} />
+                <span>Email</span>
+              </button>
+
+              {/* 1ER CONTACTO */}
+              <button
+                type="button"
+                disabled={tasks.length > 0}
+                onClick={() => {
+                  const agentName = profile?.full_name || 'Juan Herrero';
+                  setIsFeedbackModalOpen(false);
+                  setComposerConfig({
+                    method: 'whatsapp',
+                    subject: 'Información Finca Mirapinos',
+                    message: `Hola ${formData.name.split(' ')[0]},\n\nSoy ${agentName} de Terravall inmobiliaria. Nos ha solicitado información de la promoción inmobiliaria FINCA MIRAPINOS. ¿En qué puedo ayudarle?`
+                  });
+                  setIsEmailModalOpen(true);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-2 border rounded-xl transition-all text-xs font-bold uppercase tracking-wider shadow-sm ${
+                  tasks.length > 0
+                    ? 'border-slate-200 text-slate-300 bg-slate-100 cursor-not-allowed opacity-50'
+                    : isEmailModalOpen && composerConfig.subject?.includes('Información')
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-md font-extrabold'
+                      : 'bg-white text-amber-700 border-slate-200 hover:bg-amber-50 hover:border-amber-200'
+                }`}
+                title={tasks.length > 0 ? "El cliente ya tiene actividad en su agenda" : "Enviar mensaje de primer contacto"}
+              >
+                <Zap size={15} />
+                <span>1er Contacto</span>
+              </button>
+
+              {/* ENCUESTA */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEmailModalOpen(false);
+                  setIsFeedbackModalOpen(true);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-2 border rounded-xl transition-all text-xs font-bold uppercase tracking-wider shadow-sm ${
+                  isFeedbackModalOpen
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-md font-extrabold'
+                    : (lead as any).feedback_rating
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      : (lead as any).feedback_sent
+                        ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                        : 'bg-white text-purple-700 border-slate-200 hover:bg-purple-50 hover:border-purple-200'
+                }`}
+                title={
+                  (lead as any).feedback_rating
+                    ? `Valoración recibida: ${(lead as any).feedback_rating}`
+                    : (lead as any).feedback_sent
+                      ? 'Encuesta enviada, pendiente de respuesta'
+                      : 'Enviar encuesta de satisfacción'
+                }
+              >
+                <Send size={15} />
+                <span>Encuesta</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-slate-200/60 rounded-xl transition-colors text-slate-400 hover:text-slate-700 self-start md:self-center" title="Volver">
+          <X size={24} />
+        </button>
+      </div>
 
           {/* TABS */}
           <div className="flex gap-8 border-b border-slate-200 px-8 bg-white pt-2.5">
@@ -1227,7 +1243,19 @@ export default function LeadDetailModal({ lead, onClose, onUpdate }: Props) {
             )}
           </div>
         </div>
-      </div>
+  );
+
+  return (
+    <>
+      {isInline ? (
+        content
+      ) : (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            {content}
+          </div>
+        </div>
+      )}
 
       {isEmailModalOpen && (
         <EmailComposerModal
@@ -1242,6 +1270,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate }: Props) {
           initialMethod={composerConfig.method}
           initialSubject={composerConfig.subject}
           initialMessage={composerConfig.message}
+          isInline={isInline}
         />
       )}
 
@@ -1259,6 +1288,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate }: Props) {
             fetchTasks();
             onUpdate();
           }}
+          isInline={isInline}
         />
       )}
     </>

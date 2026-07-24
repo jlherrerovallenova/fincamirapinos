@@ -21,7 +21,7 @@ import {
   ArrowUpDown,
   Users
 } from 'lucide-react';
-import CreateLeadModal from '../components/leads/CreateLeadModal';
+import CreateLeadView from '../components/leads/CreateLeadView';
 import LeadDetailModal from '../components/leads/LeadDetailModal';
 import EmailComposerModal from '../components/leads/EmailComposerModal';
 import ExportLeadsModal from '../components/leads/ExportLeadsModal';
@@ -32,6 +32,7 @@ import { useLeads } from '../hooks/useLeads';
 import type { Database } from '../types/supabase';
 
 type Lead = Database['public']['Tables']['leads']['Row'];
+type ViewMode = 'list' | 'create' | 'detail' | 'export' | 'import' | 'composer';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -57,8 +58,6 @@ const STATUS_CONFIG: Record<string, { dot: string; pill: string; border: string 
   lost:        { dot: 'bg-red-400',     pill: 'bg-red-50 text-red-700 border border-red-200',         border: 'border-l-red-400' },
 };
 
-// getAvatarColor is no longer used
-
 const getStatusBadge = (status: Lead['status']) => {
   const cfg = STATUS_CONFIG[status || 'new'] || STATUS_CONFIG['new'];
   const label = STATUS_LABELS[status || 'new'] || 'Nuevo';
@@ -77,6 +76,9 @@ export default function Leads() {
     .filter(doc => doc.url)
     .map(doc => ({ name: doc.name, url: doc.url!, category: doc.category }));
 
+  // Estado de vista activa (Inline navigation sin modales)
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
   // Estados de Búsqueda y Filtros sincronizados con la URL
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || '');
@@ -89,10 +91,7 @@ export default function Leads() {
   const [sortField, setSortField] = useState<'name' | 'created_at'>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // Modales
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  // Lead seleccionado / Email
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [emailLead, setEmailLead] = useState<Lead | null>(null);
   const [initialMethod, setInitialMethod] = useState<'email' | 'whatsapp'>('email');
@@ -149,6 +148,12 @@ export default function Leads() {
   const openComposer = (lead: Lead, method: 'email' | 'whatsapp') => {
     setInitialMethod(method);
     setEmailLead(lead);
+    setViewMode('composer');
+  };
+
+  const openDetail = (lead: Lead) => {
+    setSelectedLead(lead);
+    setViewMode('detail');
   };
 
   const updateURLParams = (key: string, value: string) => {
@@ -195,300 +200,7 @@ export default function Leads() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
 
-      {/* CABECERA DE PÁGINA */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-            <Users size={36} className="text-[#006c4a]" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Mis Clientes</h2>
-            <p className="text-slate-500 text-xs font-semibold mt-1">
-              {totalLeads} prospectos {hasActiveFilters && `(filtrados)`} en el embudo de conversión.
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-3 w-full md:w-auto self-start md:self-auto">
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:text-emerald-600 transition-colors shadow-sm hidden sm:flex items-center gap-2"
-            title="Importar CSV"
-          >
-            <Upload size={18} />
-            <span className="hidden lg:inline text-xs font-bold">Importar</span>
-          </button>
-
-          <button
-            onClick={() => setIsExportModalOpen(true)}
-            className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:text-emerald-600 transition-colors shadow-sm hidden sm:flex items-center gap-2"
-            title="Exportar Listado"
-          >
-            <Download size={18} />
-            <span className="hidden lg:inline text-xs font-bold">Exportar</span>
-          </button>
-
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-5 py-3 bg-[#006c4a] text-white font-bold text-sm rounded-xl shadow-lg hover:bg-[#005137] transition-all flex items-center gap-2 active:scale-95 shrink-0 flex-1 md:flex-none justify-center"
-          >
-            <UserPlus size={18} /> <span className="inline">Nuevo Cliente</span>
-          </button>
-        </div>
-      </div>
-
-      {/* BARRA DE FILTROS */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <div className="relative flex-1 w-full group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" size={18} />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, email o teléfono..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none shadow-sm"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-
-          <div className="flex w-full lg:w-auto gap-3">
-            <div className="relative flex-1 lg:w-48">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <select
-                value={statusFilter}
-                onChange={handleStatusChange}
-                className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none appearance-none shadow-sm cursor-pointer text-slate-700"
-              >
-                <option value="">Todos los Estados</option>
-                <option value="new">Nuevos</option>
-                <option value="contacted">Contactados</option>
-                <option value="qualified">Cualificados</option>
-                <option value="visiting">Visitando</option>
-                <option value="proposal">Propuesta</option>
-                <option value="negotiation">Negociación</option>
-                <option value="closed">Cerrados</option>
-                <option value="lost">Perdidos</option>
-              </select>
-            </div>
-
-            <div className="relative flex-1 lg:w-48">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <select
-                value={sourceFilter}
-                onChange={handleSourceChange}
-                className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none appearance-none shadow-sm cursor-pointer text-slate-700"
-              >
-                <option value="">Cualquier Origen</option>
-                <option value="Idealista">Idealista</option>
-                <option value="Web">Web</option>
-                <option value="Google">Google</option>
-                <option value="Instagram">Instagram</option>
-                <option value="Facebook">Facebook</option>
-                <option value="Referido">Referido</option>
-                <option value="Llamada">Llamada</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
-
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="p-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors shadow-sm flex items-center justify-center shrink-0"
-                title="Limpiar filtros"
-              >
-                <FilterX size={18} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px] flex flex-col relative z-10">
-        {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
-            <Loader2 className="animate-spin" size={40} />
-            <p className="font-medium animate-pulse">Cargando base de datos...</p>
-          </div>
-        ) : leads.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
-              <Search size={24} />
-            </div>
-            <p className="text-slate-500 font-medium text-center px-4">
-              {hasActiveFilters
-                ? "No hay clientes que coincidan con los filtros actuales."
-                : "No hay clientes registrados en la base de datos."}
-            </p>
-            {hasActiveFilters && (
-              <button onClick={clearFilters} className="text-emerald-600 font-bold text-sm mt-4 hover:underline px-4 py-2 bg-emerald-50 rounded-lg">
-                Limpiar todos los filtros
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex-1">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 hidden md:grid">
-              <div
-                className={`col-span-4 flex items-center gap-1 cursor-pointer select-none transition-colors ${sortField === 'name' ? 'text-slate-700' : 'hover:text-slate-600'}`}
-                onClick={() => handleSort('name')}
-              >
-                Cliente
-                {sortField === 'name' ? (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
-              </div>
-              <div className="col-span-2">Estado</div>
-              <div className="col-span-3">Contacto</div>
-              <div className="col-span-1">Origen</div>
-              <div
-                className={`col-span-2 flex items-center gap-1 cursor-pointer select-none transition-colors ${sortField === 'created_at' ? 'text-slate-700' : 'hover:text-slate-600'}`}
-                onClick={() => handleSort('created_at')}
-              >
-                Alta
-                {sortField === 'created_at' ? (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
-              </div>
-            </div>
-
-            {leads.map((lead) => {
-              const cfg = STATUS_CONFIG[lead.status || 'new'] || STATUS_CONFIG['new'];
-              return (
-                <div
-                  key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
-                  className={`grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer group border-b border-slate-100 border-l-4 ${cfg.border} hover:bg-slate-50/80 transition-all duration-150`}
-                >
-                  <div className="md:col-span-4 flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm border border-emerald-100 shrink-0">
-                      {lead.name?.substring(0, 2).toUpperCase() || 'CL'}
-                    </div>
-                    <div className="min-w-0 flex items-center">
-                      <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors leading-tight">{lead.name}</h3>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    {getStatusBadge(lead.status)}
-                  </div>
-
-                  <div className="md:col-span-3 flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
-                      <div className="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
-                        <Mail size={11} className="text-blue-400" />
-                      </div>
-                      <span className="truncate">{lead.email || <span className="text-slate-300 italic">Sin email</span>}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
-                      <div className="w-5 h-5 rounded-md bg-emerald-50 flex items-center justify-center shrink-0">
-                        <Phone size={11} className="text-emerald-400" />
-                      </div>
-                      <span className="truncate">{lead.phone || <span className="text-slate-300 italic">Sin teléfono</span>}</span>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-1">
-                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1 truncate block text-center">
-                      {lead.source || 'Directo'}
-                    </span>
-                  </div>
-
-                  <div className="md:col-span-2 text-right md:text-left">
-                    <p className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
-                      {new Date(lead.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-0 md:hidden lg:flex hidden items-center justify-end gap-1 absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => { e.stopPropagation(); openComposer(lead, 'whatsapp'); }} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="WhatsApp"><MessageCircle size={15} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); openComposer(lead, 'email'); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Email"><Mail size={15} /></button>
-                    <ChevronRight size={15} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {totalLeads > 0 && (
-          <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-            <span className="text-xs text-slate-500 font-medium text-center md:text-left">
-              Mostrando {leads.length} de {totalLeads} leads
-            </span>
-
-            <div className="flex items-center gap-1 md:gap-2">
-              <button
-                onClick={() => setPage(1)}
-                disabled={page === 1}
-                className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              >
-                <ChevronsLeft size={16} />
-              </button>
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <span className="text-[10px] md:text-xs font-bold text-slate-700 px-1 md:px-2 whitespace-nowrap">
-                {page} / {totalPages || 1}
-              </span>
-
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              >
-                <ChevronRight size={16} />
-              </button>
-              <button
-                onClick={() => setPage(totalPages)}
-                disabled={page >= totalPages}
-                className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              >
-                <ChevronsRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <ExportLeadsModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
-
-      <ImportLeadsModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onSuccess={() => { refetch(); showMsg('success', '¡Importación completada!', 'Los clientes han sido importados correctamente.'); }}
-      />
-
-      <CreateLeadModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => { showMsg('success', '¡Completado!', 'El nuevo cliente ha sido creado con éxito.'); }}
-      />
-
-      {selectedLead && (
-        <LeadDetailModal
-          lead={selectedLead}
-          onClose={() => setSelectedLead(null)}
-          onUpdate={(deleted?: boolean) => {
-            if (deleted) showMsg('success', 'Cliente eliminado', 'Cliente borrado.');
-            else showMsg('info', 'Cliente actualizado', 'Cambios guardados.');
-          }}
-        />
-      )}
-
-      {emailLead && (
-        <EmailComposerModal
-          isOpen={!!emailLead}
-          onClose={() => setEmailLead(null)}
-          leadId={emailLead.id}
-          leadName={emailLead.name}
-          leadEmail={emailLead.email}
-          leadPhone={emailLead.phone}
-          availableDocs={availableDocs}
-          onSentSuccess={() => { showMsg('success', 'Mensaje enviado', 'Registrado correctamente.'); }}
-          initialMethod={initialMethod}
-        />
-      )}
-
+      {/* NOTIFICACIÓN FLOTANTE / GLOBAL */}
       {notification.show && (
         <AppNotification
           title={notification.title}
@@ -496,6 +208,344 @@ export default function Leads() {
           type={notification.type}
           onClose={() => setNotification({ ...notification, show: false })}
         />
+      )}
+
+      {/* VISTAS INLINE: DAR DE ALTA CLIENTE */}
+      {viewMode === 'create' && (
+        <CreateLeadView
+          onClose={() => setViewMode('list')}
+          onSuccess={() => {
+            refetch();
+            showMsg('success', '¡Completado!', 'El nuevo cliente ha sido creado con éxito.');
+            setViewMode('list');
+          }}
+        />
+      )}
+
+      {/* VISTAS INLINE: DETALLE DE CLIENTE */}
+      {viewMode === 'detail' && selectedLead && (
+        <LeadDetailModal
+          lead={selectedLead}
+          isInline={true}
+          onClose={() => {
+            setSelectedLead(null);
+            setViewMode('list');
+          }}
+          onUpdate={(deleted?: boolean) => {
+            refetch();
+            if (deleted) {
+              setSelectedLead(null);
+              setViewMode('list');
+              showMsg('success', 'Cliente eliminado', 'Cliente borrado.');
+            } else {
+              showMsg('info', 'Cliente actualizado', 'Cambios guardados.');
+            }
+          }}
+        />
+      )}
+
+      {/* VISTAS INLINE: ENVIAR EMAIL / WHATSAPP */}
+      {viewMode === 'composer' && emailLead && (
+        <EmailComposerModal
+          isOpen={true}
+          isInline={true}
+          onClose={() => setViewMode(selectedLead ? 'detail' : 'list')}
+          leadId={emailLead.id}
+          leadName={emailLead.name}
+          leadEmail={emailLead.email}
+          leadPhone={emailLead.phone}
+          availableDocs={availableDocs}
+          onSentSuccess={() => {
+            showMsg('success', 'Mensaje enviado', 'Registrado correctamente.');
+          }}
+          initialMethod={initialMethod}
+        />
+      )}
+
+      {/* VISTAS INLINE: EXPORTAR LISTADO */}
+      {viewMode === 'export' && (
+        <ExportLeadsModal
+          isOpen={true}
+          isInline={true}
+          onClose={() => setViewMode('list')}
+        />
+      )}
+
+      {/* VISTAS INLINE: IMPORTAR CSV / EXCEL */}
+      {viewMode === 'import' && (
+        <ImportLeadsModal
+          isOpen={true}
+          isInline={true}
+          onClose={() => setViewMode('list')}
+          onSuccess={() => {
+            refetch();
+            showMsg('success', '¡Importación completada!', 'Los clientes han sido importados correctamente.');
+            setViewMode('list');
+          }}
+        />
+      )}
+
+      {/* VISTA PRINCIPAL: LISTADO DE CLIENTES */}
+      {viewMode === 'list' && (
+        <>
+          {/* CABECERA DE PÁGINA */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                <Users size={36} className="text-[#006c4a]" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Mis Clientes</h2>
+                <p className="text-slate-500 text-xs font-semibold mt-1">
+                  {totalLeads} prospectos {hasActiveFilters && `(filtrados)`} en el embudo de conversión.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto self-start md:self-auto">
+              <button
+                onClick={() => setViewMode('import')}
+                className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:text-emerald-600 transition-colors shadow-sm hidden sm:flex items-center gap-2"
+                title="Importar CSV / Excel"
+              >
+                <Upload size={18} />
+                <span className="hidden lg:inline text-xs font-bold">Importar</span>
+              </button>
+
+              <button
+                onClick={() => setViewMode('export')}
+                className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:text-emerald-600 transition-colors shadow-sm hidden sm:flex items-center gap-2"
+                title="Exportar Listado PDF"
+              >
+                <Download size={18} />
+                <span className="hidden lg:inline text-xs font-bold">Exportar</span>
+              </button>
+
+              <button
+                onClick={() => setViewMode('create')}
+                className="px-5 py-3 bg-[#006c4a] text-white font-bold text-sm rounded-xl shadow-lg hover:bg-[#005137] transition-all flex items-center gap-2 active:scale-95 shrink-0 flex-1 md:flex-none justify-center"
+              >
+                <UserPlus size={18} /> <span className="inline">Nuevo Cliente</span>
+              </button>
+            </div>
+          </div>
+
+          {/* BARRA DE FILTROS */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col lg:flex-row gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <div className="relative flex-1 w-full group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email o teléfono..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none shadow-sm text-slate-900"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                />
+              </div>
+
+              <div className="flex w-full lg:w-auto gap-3">
+                <div className="relative flex-1 lg:w-48">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <select
+                    value={statusFilter}
+                    onChange={handleStatusChange}
+                    className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none appearance-none shadow-sm cursor-pointer text-slate-700"
+                  >
+                    <option value="">Todos los Estados</option>
+                    <option value="new">Nuevos</option>
+                    <option value="contacted">Contactados</option>
+                    <option value="qualified">Cualificados</option>
+                    <option value="visiting">Visitando</option>
+                    <option value="proposal">Propuesta</option>
+                    <option value="negotiation">Negociación</option>
+                    <option value="closed">Cerrados</option>
+                    <option value="lost">Perdidos</option>
+                  </select>
+                </div>
+
+                <div className="relative flex-1 lg:w-48">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <select
+                    value={sourceFilter}
+                    onChange={handleSourceChange}
+                    className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none appearance-none shadow-sm cursor-pointer text-slate-700"
+                  >
+                    <option value="">Cualquier Origen</option>
+                    <option value="Idealista">Idealista</option>
+                    <option value="Web">Web</option>
+                    <option value="Google">Google</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
+                    <option value="Referido">Referido</option>
+                    <option value="Llamada">Llamada</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="p-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors shadow-sm flex items-center justify-center shrink-0"
+                    title="Limpiar filtros"
+                  >
+                    <FilterX size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* TABLA / TARJETAS DE CLIENTES */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px] flex flex-col relative z-10">
+            {loading ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
+                <Loader2 className="animate-spin" size={40} />
+                <p className="font-medium animate-pulse">Cargando base de datos...</p>
+              </div>
+            ) : leads.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                  <Search size={24} />
+                </div>
+                <p className="text-slate-500 font-medium text-center px-4">
+                  {hasActiveFilters
+                    ? "No hay clientes que coincidan con los filtros actuales."
+                    : "No hay clientes registrados en la base de datos."}
+                </p>
+                {hasActiveFilters && (
+                  <button onClick={clearFilters} className="text-emerald-600 font-bold text-sm mt-4 hover:underline px-4 py-2 bg-emerald-50 rounded-lg">
+                    Limpiar todos los filtros
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex-1">
+                <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 hidden md:grid">
+                  <div
+                    className={`col-span-4 flex items-center gap-1 cursor-pointer select-none transition-colors ${sortField === 'name' ? 'text-slate-700' : 'hover:text-slate-600'}`}
+                    onClick={() => handleSort('name')}
+                  >
+                    Cliente
+                    {sortField === 'name' ? (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
+                  </div>
+                  <div className="col-span-2">Estado</div>
+                  <div className="col-span-3">Contacto</div>
+                  <div className="col-span-1">Origen</div>
+                  <div
+                    className={`col-span-2 flex items-center gap-1 cursor-pointer select-none transition-colors ${sortField === 'created_at' ? 'text-slate-700' : 'hover:text-slate-600'}`}
+                    onClick={() => handleSort('created_at')}
+                  >
+                    Alta
+                    {sortField === 'created_at' ? (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
+                  </div>
+                </div>
+
+                {leads.map((lead) => {
+                  const cfg = STATUS_CONFIG[lead.status || 'new'] || STATUS_CONFIG['new'];
+                  return (
+                    <div
+                      key={lead.id}
+                      onClick={() => openDetail(lead)}
+                      className={`grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer group border-b border-slate-100 border-l-4 ${cfg.border} hover:bg-slate-50/80 transition-all duration-150 relative`}
+                    >
+                      <div className="md:col-span-4 flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm border border-emerald-100 shrink-0">
+                          {lead.name?.substring(0, 2).toUpperCase() || 'CL'}
+                        </div>
+                        <div className="min-w-0 flex items-center">
+                          <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors leading-tight">{lead.name}</h3>
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2 flex items-center justify-between md:justify-start">
+                        {getStatusBadge(lead.status)}
+                      </div>
+
+                      <div className="md:col-span-3 flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
+                          <div className="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
+                            <Mail size={11} className="text-blue-400" />
+                          </div>
+                          <span className="truncate">{lead.email || <span className="text-slate-300 italic">Sin email</span>}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
+                          <div className="w-5 h-5 rounded-md bg-emerald-50 flex items-center justify-center shrink-0">
+                            <Phone size={11} className="text-emerald-400" />
+                          </div>
+                          <span className="truncate">{lead.phone || <span className="text-slate-300 italic">Sin teléfono</span>}</span>
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-1">
+                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1 truncate block text-center">
+                          {lead.source || 'Directo'}
+                        </span>
+                      </div>
+
+                      <div className="md:col-span-2 flex items-center justify-between md:justify-start">
+                        <p className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                          {new Date(lead.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                        <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors md:hidden" />
+                      </div>
+
+                      <div className="hidden lg:flex items-center justify-end gap-1 absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); openComposer(lead, 'whatsapp'); }} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="WhatsApp"><MessageCircle size={15} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); openComposer(lead, 'email'); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Email"><Mail size={15} /></button>
+                        <ChevronRight size={15} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* PAGINACIÓN */}
+            {totalLeads > 0 && (
+              <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-medium text-center md:text-left">
+                  Mostrando {leads.length} de {totalLeads} leads
+                </span>
+
+                <div className="flex items-center gap-1 md:gap-2">
+                  <button
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                    className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <span className="text-[10px] md:text-xs font-bold text-slate-700 px-1 md:px-2 whitespace-nowrap">
+                    {page} / {totalPages || 1}
+                  </span>
+
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    onClick={() => setPage(totalPages)}
+                    disabled={page >= totalPages}
+                    className="p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

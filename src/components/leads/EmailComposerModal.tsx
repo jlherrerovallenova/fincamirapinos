@@ -33,6 +33,7 @@ interface Props {
   initialMethod?: 'email' | 'whatsapp';
   initialSubject?: string;
   initialMessage?: string;
+  isInline?: boolean;
 }
 
 export default function EmailComposerModal({
@@ -46,7 +47,8 @@ export default function EmailComposerModal({
   onSentSuccess,
   initialMethod,
   initialSubject,
-  initialMessage
+  initialMessage,
+  isInline = true
 }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -95,7 +97,6 @@ export default function EmailComposerModal({
 
   if (!isOpen) return null;
 
-  // Genera la firma dinámica con los datos del comercial que envía
   const getSignatureHtml = (): string => {
     return `
       <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-top: 32px; font-family: Arial, sans-serif;">
@@ -109,17 +110,14 @@ export default function EmailComposerModal({
           </td>
           <td style="width: 50%; text-align: right; vertical-align: middle; padding: 0;">
             <div style="display: inline-block; text-align: left;">
-              <!-- Location -->
               <div style="font-size: 12px; color: #475569; font-weight: 500; margin-bottom: 4px;">
                 <span style="margin-right: 6px;">📍</span>
                 <span>Plaza Mayor 8, 1ºA &middot; Valladolid</span>
               </div>
-              <!-- Phone -->
               <div style="font-size: 12px; color: #475569; font-weight: 500; margin-bottom: 4px;">
                 <span style="margin-right: 6px;">📞</span>
                 <a href="tel:983342132" style="color: #475569; text-decoration: none;">983 34 21 32</a>
               </div>
-              <!-- Web -->
               <div style="font-size: 12px; color: #006c4a; font-weight: 600;">
                 <span style="margin-right: 6px; color: #006c4a;">🌐</span>
                 <a href="https://www.mirapinos.com" target="_blank" style="color: #006c4a; text-decoration: none;">www.mirapinos.com</a>
@@ -164,10 +162,7 @@ export default function EmailComposerModal({
         if (insertErr) throw insertErr;
         queryClient.invalidateQueries({ queryKey: ['agenda'] });
       } catch (err: any) {
-        // Si falla por columna tracking_id no existente (por falta de migración),
-        // reintentar sin ella para no romper la experiencia
         if (payload.tracking_id && (err?.message?.includes('tracking_id') || err?.message?.includes('schema cache'))) {
-          console.warn('Volviendo a intentar sin tracking_id debido a error de base de datos:', err);
           delete payload.tracking_id;
           const { error: retryErr } = await supabase.from('agenda').insert([payload] as any);
           if (retryErr) throw retryErr;
@@ -299,7 +294,6 @@ export default function EmailComposerModal({
                         <td style="padding: 12px 14px; vertical-align: middle;">
                           <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
                             <tr>
-                              <!-- Icon -->
                               <td style="width: 36px; vertical-align: middle; padding: 0;">
                                 <table cellpadding="0" cellspacing="0" border="0" style="width: 36px; height: 36px; background-color: ${wrapperBg}; border: 1px solid ${wrapperBorder}; border-radius: 6px; text-align: center; border-collapse: collapse;">
                                   <tr>
@@ -309,7 +303,6 @@ export default function EmailComposerModal({
                                   </tr>
                                 </table>
                               </td>
-                              <!-- File Name & Meta -->
                               <td style="padding-left: 12px; vertical-align: middle; text-align: left;">
                                 <div style="font-size: 13px; font-weight: bold; color: #1e293b; line-height: 1.3; margin: 0; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                   ${d.name}
@@ -318,7 +311,6 @@ export default function EmailComposerModal({
                                   ${metaText}
                                 </div>
                               </td>
-                              <!-- Action Icon -->
                               <td style="width: 24px; text-align: right; vertical-align: middle; font-size: 14px; color: #64748b;">
                                 ${actionIcon}
                               </td>
@@ -356,7 +348,6 @@ export default function EmailComposerModal({
           `;
         }
 
-        // Insertamos en email_tracking para obtener el tracking_id
         const { data: trackingRecord, error: trackingError } = await (supabase as any)
           .from('email_tracking')
           .insert([{ lead_id: leadId, subject: subject }])
@@ -371,7 +362,6 @@ export default function EmailComposerModal({
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const pixelHtml = trackingId ? `<img src="${supabaseUrl}/functions/v1/track-pixel?tracking_id=${trackingId}" width="1" height="1" alt="" style="display:none;" />` : '';
 
-        // Construimos el cuerpo HTML con el nuevo diseño profesional Mirapinos
         const logoUrl = 'https://raw.githubusercontent.com/jlherrerovallenova/mirapinos-crm/main/public/logo-mirapinos.png';
         const htmlFullMessage = `
           <!DOCTYPE html>
@@ -382,14 +372,12 @@ export default function EmailComposerModal({
                 <td align="center" style="padding: 40px 16px;">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.05);">
 
-                    <!-- ENCABEZADO MIRAPINOS -->
                     <tr>
                       <td style="background-color:#ffffff; padding: 32px 40px 24px 40px; text-align:center; border-bottom: 2px solid #006c4a;">
                         <img src="${logoUrl}" alt="— F I N C A — MIRAPINOS" height="52" style="height: 52px; width: auto; display: block; margin: 0 auto;" />
                       </td>
                     </tr>
 
-                    <!-- CUERPO -->
                     <tr>
                       <td style="padding: 40px 48px; font-family: Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #334155; text-align: left;">
                         ${message.replace(/\n/g, '<br>')}
@@ -399,7 +387,6 @@ export default function EmailComposerModal({
                       </td>
                     </tr>
 
-                    <!-- PIE -->
                     <tr>
                       <td style="background-color:#006c4a; padding: 16px 40px; text-align: center;">
                         <div style="font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; color: #ffffff; letter-spacing: 0.2em; text-transform: uppercase;">MIRAPINOS, CASAS DE CAMPO</div>
@@ -433,7 +420,6 @@ export default function EmailComposerModal({
         setStatus('success');
         setTimeout(onClose, 2000);
       } else {
-        // Lógica WhatsApp (se mantiene igual ya que WhatsApp no soporta firmas HTML/Base64)
         if (!leadPhone) {
           await showAlert({ title: 'Atención', message: 'El cliente no tiene teléfono configurado.' });
           setLoading(false);
@@ -467,169 +453,199 @@ export default function EmailComposerModal({
     }
   };
 
-  return createPortal(
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[70] flex items-start justify-center pt-16 p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
-
-        {/* HEADER OSCURO ESTILO FICHA CLIENTE */}
-        <div className="bg-[#131b2e] px-6 py-4 flex items-center justify-between gap-4 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs text-white ${
-              method === 'email' ? 'bg-blue-600/80 border border-blue-500/30' : 'bg-emerald-600/80 border border-emerald-500/30'
-            }`}>
-              {method === 'email' ? <Mail size={18} /> : <MessageCircle size={18} />}
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                {method === 'email' ? 'Envío por Email' : 'Envío por WhatsApp'}
-              </p>
-              <h2 className="text-white font-bold text-base leading-tight">
-                Enviar a <span className="text-emerald-400 font-extrabold">{leadName}</span> mensaje por {method === 'email' ? 'email' : 'whatsapp'}
-              </h2>
-            </div>
+  const content = (
+    <div className="bg-white w-full rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden animate-in fade-in duration-200">
+      {/* HEADER CLARO Y LIMPIO */}
+      <div className="bg-slate-50 px-6 py-4 flex items-center justify-between gap-4 border-b border-slate-200/80">
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
+            method === 'email' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+          }`}>
+            {method === 'email' ? <Mail size={18} /> : <MessageCircle size={18} />}
           </div>
-          
-          {/* BOTÓN CERRAR */}
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              {method === 'email' ? 'Envío por Email' : 'Envío por WhatsApp'}
+            </p>
+            <h2 className="text-slate-900 font-bold text-base leading-tight">
+              Enviar a <span className="text-emerald-700 font-extrabold">{leadName}</span> mensaje por {method === 'email' ? 'email' : 'whatsapp'}
+            </h2>
+          </div>
+        </div>
+        
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1.5 hover:bg-slate-200/60 rounded-xl transition-colors text-slate-400 hover:text-slate-700 shrink-0"
+          title="Volver"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <form onSubmit={handleSend} className="p-6 space-y-5">
+
+        {/* METODO SELECTOR SI SE DESEA CAMBIAR */}
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
           <button
             type="button"
-            onClick={onClose}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white shrink-0"
-            title="Cerrar"
+            onClick={() => setMethod('email')}
+            className={`flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              method === 'email' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
-            <X size={20} />
+            <Mail size={14} /> Correo Electrónico
+          </button>
+          <button
+            type="button"
+            onClick={() => setMethod('whatsapp')}
+            className={`flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              method === 'whatsapp' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <MessageCircle size={14} /> WhatsApp
           </button>
         </div>
 
-        <form onSubmit={handleSend} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
-
-          {/* CAMPOS */}
-          <div className="space-y-4">
-            {method === 'email' && (
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asunto</label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full mt-1.5 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none font-semibold text-sm text-slate-800 transition-all"
-                />
-              </div>
-            )}
-
+        {/* CAMPOS */}
+        <div className="space-y-4">
+          {method === 'email' && (
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mensaje personalizado</label>
-              <textarea
-                rows={4}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full mt-1.5 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-300/30 focus:border-slate-400 outline-none font-medium text-sm text-slate-700 resize-none transition-all"
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asunto</label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full mt-1.5 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none font-semibold text-sm text-slate-800 transition-all"
               />
             </div>
-          </div>
+          )}
 
-          {/* DOCUMENTOS */}
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Documentación a enviar</label>
-            <div className="space-y-3">
-                {['Documentos Olivo', 'Documentos Arce', 'Parcelas', 'Renders-Fotos', 'Sin Categoría', 'Archivo Externo'].map(cat => {
-                  const catDocs = (cat === 'Archivo Externo') 
-                    ? selectedDocs.filter(d => d.category === 'Archivo Externo')
-                    : availableDocs.filter(d => (d.category || 'Sin Categoría') === cat);
-                    
-                  if (catDocs.length === 0 && cat !== 'Archivo Externo') return null;
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mensaje personalizado</label>
+            <textarea
+              rows={5}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full mt-1.5 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-300/30 focus:border-slate-400 outline-none font-medium text-sm text-slate-700 transition-all"
+            />
+          </div>
+        </div>
 
-                  return (
-                    <div key={cat} className="border border-slate-200 rounded-lg overflow-hidden">
-                      <div 
-                        className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
-                        onClick={() => setExpandedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat])}
-                      >
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{cat}</h4>
-                          {expandedCategories.includes(cat) ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
-                        </div>
-                        {cat === 'Archivo Externo' && (
-                          <label 
-                            className="cursor-pointer flex items-center gap-1.5 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold hover:bg-emerald-200 transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Upload size={10} /> Adjuntar nuevo
-                            <input type="file" className="hidden" onChange={handleFileUpload} />
-                          </label>
-                        )}
+        {/* DOCUMENTOS */}
+        <div>
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Documentación a enviar</label>
+          <div className="space-y-3">
+              {['Documentos Olivo', 'Documentos Arce', 'Parcelas', 'Renders-Fotos', 'Sin Categoría', 'Archivo Externo'].map(cat => {
+                const catDocs = (cat === 'Archivo Externo') 
+                  ? selectedDocs.filter(d => d.category === 'Archivo Externo')
+                  : availableDocs.filter(d => (d.category || 'Sin Categoría') === cat);
+                  
+                if (catDocs.length === 0 && cat !== 'Archivo Externo') return null;
+
+                return (
+                  <div key={cat} className="border border-slate-200 rounded-xl overflow-hidden">
+                    <div 
+                      className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => setExpandedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat])}
+                    >
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{cat}</h4>
+                        {expandedCategories.includes(cat) ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
                       </div>
-                      
-                      {expandedCategories.includes(cat) && (
-                        <div className="grid grid-cols-2 gap-px bg-slate-100">
-                          {catDocs.length === 0 && cat === 'Archivo Externo' ? (
-                            <div className="col-span-2 bg-white px-4 py-3 text-center">
-                              <p className="text-[10px] text-slate-400 italic">No hay archivos externos adjuntos para este envío.</p>
-                            </div>
-                          ) : (
-                            catDocs.map((doc, idx) => {
-                              const isSelected = selectedDocs.find(d => d.url === doc.url);
-                              return (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => toggleDoc(doc)}
-                                  className={`flex items-center gap-2.5 px-4 py-3 text-left transition-all ${
-                                    isSelected
-                                      ? 'bg-emerald-50 text-emerald-700'
-                                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  <Paperclip size={13} className={isSelected ? 'text-emerald-500 shrink-0' : 'text-slate-300 shrink-0'} />
-                                  <span className="text-xs font-semibold truncate" title={doc.name}>{doc.name}</span>
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
+                      {cat === 'Archivo Externo' && (
+                        <label 
+                          className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold hover:bg-emerald-200 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Upload size={12} /> Adjuntar archivo
+                          <input type="file" className="hidden" onChange={handleFileUpload} />
+                        </label>
                       )}
                     </div>
-                  );
-                })}
-            </div>
+                    
+                    {expandedCategories.includes(cat) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-100">
+                        {catDocs.length === 0 && cat === 'Archivo Externo' ? (
+                          <div className="col-span-2 bg-white px-4 py-3 text-center">
+                            <p className="text-[10px] text-slate-400 italic">No hay archivos externos adjuntos para este envío.</p>
+                          </div>
+                        ) : (
+                          catDocs.map((doc, idx) => {
+                            const isSelected = selectedDocs.find(d => d.url === doc.url);
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => toggleDoc(doc)}
+                                className={`flex items-center gap-2.5 px-4 py-3 text-left transition-all ${
+                                  isSelected
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                                }`}
+                              >
+                                <Paperclip size={14} className={isSelected ? 'text-emerald-500 shrink-0' : 'text-slate-300 shrink-0'} />
+                                <span className="text-xs font-semibold truncate" title={doc.name}>{doc.name}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex-1">
+            {status === 'success' && (
+              <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                <CheckCircle2 size={18} /> ¡Mensaje procesado correctamente!
+              </div>
+            )}
+            {status === 'error' && (
+              <div className="flex items-center gap-2 text-red-500 font-bold text-sm">
+                <AlertCircle size={18} /> Error al procesar el envío
+              </div>
+            )}
           </div>
 
-          {/* FOOTER */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
-            <div className="flex-1">
-              {status === 'success' && (
-                <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                  <CheckCircle2 size={17} /> ¡Enviado correctamente!
-                </div>
-              )}
-              {status === 'error' && (
-                <div className="flex items-center gap-2 text-red-500 font-bold text-sm">
-                  <AlertCircle size={17} /> Error al procesar el envío
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 text-slate-500 font-semibold text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={loading || status === 'success'}
-                className={`px-6 py-2.5 rounded-lg font-bold text-sm text-white flex items-center gap-2 transition-all active:scale-95 disabled:opacity-60 shadow-sm ${
-                  method === 'email' ? 'bg-[#1a5c38] hover:bg-[#134228]' : 'bg-emerald-600 hover:bg-emerald-700'
-                }`}
-              >
-                {loading ? <Loader2 className="animate-spin" size={16} /> : 'Enviar Documentación'}
-              </button>
-            </div>
+          <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 sm:flex-initial px-5 py-2.5 text-slate-600 font-semibold text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+            >
+              Volver
+            </button>
+            <button
+              type="submit"
+              disabled={loading || status === 'success'}
+              className={`flex-1 sm:flex-initial px-6 py-2.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60 shadow-sm ${
+                method === 'email' ? 'bg-[#1a5c38] hover:bg-[#134228]' : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
+            >
+              {loading ? <Loader2 className="animate-spin" size={16} /> : 'Enviar Documentación'}
+            </button>
           </div>
-        </form>
+        </div>
+      </form>
+    </div>
+  );
+
+  if (isInline) {
+    return content;
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[70] flex items-start justify-center pt-16 p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-2xl">
+        {content}
       </div>
     </div>,
     document.body
   );
-}
+}
