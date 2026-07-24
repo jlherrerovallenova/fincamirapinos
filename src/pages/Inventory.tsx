@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   Filter,
   Copy,
-  FileText
+  FileText,
+  Trees,
+  Leaf
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -401,7 +403,24 @@ export default function Inventory() {
                             {property.numero_vivienda}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-bold text-slate-800 text-center">{property.modelo}</td>
+                        <td className="py-4 px-6 text-center">
+                          <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
+                            property.modelo.toUpperCase().includes('OLIVO')
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                              : property.modelo.toUpperCase().includes('ARCE')
+                                ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
+                                : 'bg-slate-100 text-slate-800 border border-slate-200'
+                          }`}>
+                            {property.modelo.toUpperCase().includes('OLIVO') ? (
+                              <Trees size={15} className="text-emerald-600 shrink-0" />
+                            ) : property.modelo.toUpperCase().includes('ARCE') ? (
+                              <Leaf size={15} className="text-amber-600 shrink-0" />
+                            ) : (
+                              <Home size={15} className="text-slate-400 shrink-0" />
+                            )}
+                            <span>{property.modelo}</span>
+                          </span>
+                        </td>
                         <td className="py-4 px-6 text-slate-600 font-medium text-center">{property.superficie_parcela ? `${property.superficie_parcela} m²` : '-'}</td>
                         <td className="py-4 px-6 text-slate-600 font-medium text-center">
                           {property.superficie_util ? `${property.superficie_util} m²` : '-'} / {property.superficie_construida ? `${property.superficie_construida} m²` : '-'}

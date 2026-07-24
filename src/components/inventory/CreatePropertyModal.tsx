@@ -10,7 +10,9 @@ import {
   Bath,
   Euro,
   Loader2,
-  Save
+  Save,
+  Trees,
+  Leaf
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useDialog } from '../../context/DialogContext';
@@ -154,7 +156,13 @@ export default function CreatePropertyModal({ isOpen, onClose, onSuccess, initia
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modelo</label>
               <div className="relative mt-1.5">
-                <Home className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                {formData.modelo.includes('OLIVO') ? (
+                  <Trees className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600" size={18} />
+                ) : formData.modelo.includes('ARCE') ? (
+                  <Leaf className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600" size={18} />
+                ) : (
+                  <Home className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                )}
                 <select
                   name="modelo"
                   value={formData.modelo}
