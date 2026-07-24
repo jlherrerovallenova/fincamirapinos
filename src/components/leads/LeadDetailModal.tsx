@@ -183,13 +183,11 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
         () => {
           if (!ignore) fetchTasks();
         }
-      );
-
-    const subscription = channel.subscribe();
+      )
+      .subscribe();
 
     return () => {
       ignore = true;
-      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, [lead.id, fetchTasks]);
