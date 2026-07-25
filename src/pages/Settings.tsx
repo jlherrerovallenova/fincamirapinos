@@ -24,8 +24,6 @@ import {
   Hash,
   Maximize,
   Ruler,
-  BedDouble,
-  Bath,
   Euro
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';

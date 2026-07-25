@@ -1,5 +1,5 @@
 // src/components/leads/LeadDetailModal.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   X, Mail, Phone, Save, Trash2, Loader2, Send,
   Compass, MessageCircle, Calendar as CalendarIcon,
@@ -12,9 +12,10 @@ import { useDialog } from '../../context/DialogContext';
 import EmailComposerModal from './EmailComposerModal';
 import { useDocuments } from '../../hooks/useDocuments';
 import type { Database } from '../../types/supabase';
-import SaleTab from './SaleTab';
 import FeedbackEmailModal from '../surveys/components/FeedbackEmailModal';
 import { formatClientName } from '../../utils/formatName';
+
+const SaleTab = lazy(() => import('./SaleTab'));
 
 type Lead = Database['public']['Tables']['leads']['Row'];
 type AgendaItem = Database['public']['Tables']['agenda']['Row'];
@@ -171,23 +172,25 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
 
     const channel = supabase.channel(`email_tracking_changes_${lead.id}`);
     
-    channel
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'email_tracking',
-          filter: `lead_id=eq.${lead.id}`
-        },
-        () => {
-          if (!ignore) fetchTasks();
-        }
-      )
-      .subscribe();
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'email_tracking',
+        filter: `lead_id=eq.${lead.id}`
+      },
+      () => {
+        if (!ignore) fetchTasks();
+      }
+    );
+
+    channel.subscribe();
 
     return () => {
       ignore = true;
+      (channel as any).off?.('postgres_changes');
+      channel.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, [lead.id, fetchTasks]);
@@ -1240,15 +1243,22 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
               </div>
             ) : (
               <div className="p-6 overflow-y-auto flex-1">
-                <SaleTab lead={lead} onLeadUpdate={async (updates) => {
-                  try {
-                    await updateMutation.mutateAsync({ id: lead.id, updates });
-                    onUpdate();
-                  } catch (err) {
-                    console.error("Error updating lead from SaleTab:", err);
-                    showAlert({ title: 'Error', message: 'No se pudieron guardar los datos.' });
-                  }
-                }} />
+                <Suspense fallback={
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+                    <Loader2 className="animate-spin text-emerald-600" size={32} />
+                    <p className="text-xs font-semibold animate-pulse">Cargando módulo de Venta...</p>
+                  </div>
+                }>
+                  <SaleTab lead={lead} onLeadUpdate={async (updates) => {
+                    try {
+                      await updateMutation.mutateAsync({ id: lead.id, updates });
+                      onUpdate();
+                    } catch (err) {
+                      console.error("Error updating lead from SaleTab:", err);
+                      showAlert({ title: 'Error', message: 'No se pudieron guardar los datos.' });
+                    }
+                  }} />
+                </Suspense>
               </div>
             )}
           </div>

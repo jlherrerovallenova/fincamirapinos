@@ -47,7 +47,7 @@ export function AgendaListItem({ task, onToggle, onDelete, onWhatsApp, formatDat
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-            <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+            <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
               task.type === 'Llamada' ? 'bg-blue-50 text-blue-600 border-blue-100' :
               task.type === 'WhatsApp' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
               task.type === 'Visita' ? 'bg-purple-50 text-purple-600 border-purple-100' :
@@ -62,7 +62,7 @@ export function AgendaListItem({ task, onToggle, onDelete, onWhatsApp, formatDat
               const opensLabel = tracking.opens_count > 0 ? ` (${tracking.opens_count})` : '';
               return (
                 <span 
-                  className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                  className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
                     isOpened 
                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
                       : 'bg-slate-50 text-slate-400 border-slate-100'
@@ -82,7 +82,7 @@ export function AgendaListItem({ task, onToggle, onDelete, onWhatsApp, formatDat
               {task.leads?.name || 'Cliente anónimo'}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold truncate">
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium truncate">
             <span className={`truncate ${task.completed ? 'opacity-60' : ''}`}>
               {(() => {
                 const match = task.title.match(/^(Envío\s+[^:]+):\s*(.*)$/i);
@@ -95,7 +95,7 @@ export function AgendaListItem({ task, onToggle, onDelete, onWhatsApp, formatDat
               })()}
             </span>
             <span className="opacity-30 shrink-0">•</span>
-            <span className={`shrink-0 ${isOverdue && !task.completed ? "text-red-500 font-black flex items-center gap-0.5 bg-red-50 px-1 py-0.2 rounded border border-red-100" : "text-emerald-600"}`}>
+            <span className={`shrink-0 ${isOverdue && !task.completed ? "text-red-500 font-bold flex items-center gap-0.5 bg-red-50 px-1 py-0.2 rounded border border-red-100" : "text-emerald-600 font-semibold"}`}>
               {isOverdue && !task.completed && <AlertCircle size={9} />}
               {formatDate(task.due_date)}
             </span>

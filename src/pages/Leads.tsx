@@ -1,5 +1,5 @@
 // src/pages/Leads.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -21,15 +21,17 @@ import {
   ArrowUpDown,
   Users
 } from 'lucide-react';
-import CreateLeadView from '../components/leads/CreateLeadView';
-import LeadDetailModal from '../components/leads/LeadDetailModal';
-import EmailComposerModal from '../components/leads/EmailComposerModal';
-import ExportLeadsModal from '../components/leads/ExportLeadsModal';
-import ImportLeadsModal from '../components/leads/ImportLeadsModal';
 import { AppNotification } from '../components/AppNotification';
 import { useDocuments } from '../hooks/useDocuments';
 import { useLeads } from '../hooks/useLeads';
 import type { Database } from '../types/supabase';
+
+// Componentes diferidos (Lazy Loading)
+const CreateLeadView = lazy(() => import('../components/leads/CreateLeadView'));
+const LeadDetailModal = lazy(() => import('../components/leads/LeadDetailModal'));
+const EmailComposerModal = lazy(() => import('../components/leads/EmailComposerModal'));
+const ExportLeadsModal = lazy(() => import('../components/leads/ExportLeadsModal'));
+const ImportLeadsModal = lazy(() => import('../components/leads/ImportLeadsModal'));
 
 type Lead = Database['public']['Tables']['leads']['Row'];
 type ViewMode = 'list' | 'create' | 'detail' | 'export' | 'import' | 'composer';
@@ -210,80 +212,88 @@ export default function Leads() {
         />
       )}
 
-      {/* VISTAS INLINE: DAR DE ALTA CLIENTE */}
-      {viewMode === 'create' && (
-        <CreateLeadView
-          onClose={() => setViewMode('list')}
-          onSuccess={() => {
-            refetch();
-            showMsg('success', '¡Completado!', 'El nuevo cliente ha sido creado con éxito.');
-            setViewMode('list');
-          }}
-        />
-      )}
+      {/* VISTAS INLINE Y MODALES DIFERIDOS */}
+      <Suspense fallback={
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+          <Loader2 className="animate-spin text-emerald-600" size={32} />
+          <p className="text-xs font-semibold animate-pulse">Cargando módulo...</p>
+        </div>
+      }>
+        {/* VISTAS INLINE: DAR DE ALTA CLIENTE */}
+        {viewMode === 'create' && (
+          <CreateLeadView
+            onClose={() => setViewMode('list')}
+            onSuccess={() => {
+              refetch();
+              showMsg('success', '¡Completado!', 'El nuevo cliente ha sido creado con éxito.');
+              setViewMode('list');
+            }}
+          />
+        )}
 
-      {/* VISTAS INLINE: DETALLE DE CLIENTE */}
-      {viewMode === 'detail' && selectedLead && (
-        <LeadDetailModal
-          lead={selectedLead}
-          isInline={true}
-          onClose={() => {
-            setSelectedLead(null);
-            setViewMode('list');
-          }}
-          onUpdate={(deleted?: boolean) => {
-            refetch();
-            if (deleted) {
+        {/* VISTAS INLINE: DETALLE DE CLIENTE */}
+        {viewMode === 'detail' && selectedLead && (
+          <LeadDetailModal
+            lead={selectedLead}
+            isInline={true}
+            onClose={() => {
               setSelectedLead(null);
               setViewMode('list');
-              showMsg('success', 'Cliente eliminado', 'Cliente borrado.');
-            } else {
-              showMsg('info', 'Cliente actualizado', 'Cambios guardados.');
-            }
-          }}
-        />
-      )}
+            }}
+            onUpdate={(deleted?: boolean) => {
+              refetch();
+              if (deleted) {
+                setSelectedLead(null);
+                setViewMode('list');
+                showMsg('success', 'Cliente eliminado', 'Cliente borrado.');
+              } else {
+                showMsg('info', 'Cliente actualizado', 'Cambios guardados.');
+              }
+            }}
+          />
+        )}
 
-      {/* VISTAS INLINE: ENVIAR EMAIL / WHATSAPP */}
-      {viewMode === 'composer' && emailLead && (
-        <EmailComposerModal
-          isOpen={true}
-          isInline={true}
-          onClose={() => setViewMode(selectedLead ? 'detail' : 'list')}
-          leadId={emailLead.id}
-          leadName={emailLead.name}
-          leadEmail={emailLead.email}
-          leadPhone={emailLead.phone}
-          availableDocs={availableDocs}
-          onSentSuccess={() => {
-            showMsg('success', 'Mensaje enviado', 'Registrado correctamente.');
-          }}
-          initialMethod={initialMethod}
-        />
-      )}
+        {/* VISTAS INLINE: ENVIAR EMAIL / WHATSAPP */}
+        {viewMode === 'composer' && emailLead && (
+          <EmailComposerModal
+            isOpen={true}
+            isInline={true}
+            onClose={() => setViewMode(selectedLead ? 'detail' : 'list')}
+            leadId={emailLead.id}
+            leadName={emailLead.name}
+            leadEmail={emailLead.email}
+            leadPhone={emailLead.phone}
+            availableDocs={availableDocs}
+            onSentSuccess={() => {
+              showMsg('success', 'Mensaje enviado', 'Registrado correctamente.');
+            }}
+            initialMethod={initialMethod}
+          />
+        )}
 
-      {/* VISTAS INLINE: EXPORTAR LISTADO */}
-      {viewMode === 'export' && (
-        <ExportLeadsModal
-          isOpen={true}
-          isInline={true}
-          onClose={() => setViewMode('list')}
-        />
-      )}
+        {/* VISTAS INLINE: EXPORTAR LISTADO */}
+        {viewMode === 'export' && (
+          <ExportLeadsModal
+            isOpen={true}
+            isInline={true}
+            onClose={() => setViewMode('list')}
+          />
+        )}
 
-      {/* VISTAS INLINE: IMPORTAR CSV / EXCEL */}
-      {viewMode === 'import' && (
-        <ImportLeadsModal
-          isOpen={true}
-          isInline={true}
-          onClose={() => setViewMode('list')}
-          onSuccess={() => {
-            refetch();
-            showMsg('success', '¡Importación completada!', 'Los clientes han sido importados correctamente.');
-            setViewMode('list');
-          }}
-        />
-      )}
+        {/* VISTAS INLINE: IMPORTAR CSV / EXCEL */}
+        {viewMode === 'import' && (
+          <ImportLeadsModal
+            isOpen={true}
+            isInline={true}
+            onClose={() => setViewMode('list')}
+            onSuccess={() => {
+              refetch();
+              showMsg('success', '¡Importación completada!', 'Los clientes han sido importados correctamente.');
+              setViewMode('list');
+            }}
+          />
+        )}
+      </Suspense>
 
       {/* VISTA PRINCIPAL: LISTADO DE CLIENTES */}
       {viewMode === 'list' && (
@@ -422,22 +432,23 @@ export default function Leads() {
               <div className="flex-1">
                 <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 hidden md:grid">
                   <div
-                    className={`col-span-4 flex items-center gap-1 cursor-pointer select-none transition-colors ${sortField === 'name' ? 'text-slate-700' : 'hover:text-slate-600'}`}
+                    className={`col-span-3 flex items-center justify-start gap-1 cursor-pointer select-none transition-colors ${sortField === 'name' ? 'text-slate-700' : 'hover:text-slate-600'}`}
                     onClick={() => handleSort('name')}
                   >
                     Cliente
                     {sortField === 'name' ? (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                   </div>
-                  <div className="col-span-2">Estado</div>
-                  <div className="col-span-3">Contacto</div>
-                  <div className="col-span-1">Origen</div>
+                  <div className="col-span-3 flex items-center justify-start">Contacto</div>
+                  <div className="col-span-2 flex items-center justify-start">Estado</div>
+                  <div className="col-span-1 flex items-center justify-start">Origen</div>
                   <div
-                    className={`col-span-2 flex items-center gap-1 cursor-pointer select-none transition-colors ${sortField === 'created_at' ? 'text-slate-700' : 'hover:text-slate-600'}`}
+                    className={`col-span-1 flex items-center justify-start gap-1 cursor-pointer select-none transition-colors ${sortField === 'created_at' ? 'text-slate-700' : 'hover:text-slate-600'}`}
                     onClick={() => handleSort('created_at')}
                   >
                     Alta
                     {sortField === 'created_at' ? (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                   </div>
+                  <div className="col-span-2 flex items-center justify-start">Acciones</div>
                 </div>
 
                 {leads.map((lead) => {
@@ -448,7 +459,8 @@ export default function Leads() {
                       onClick={() => openDetail(lead)}
                       className={`grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer group border-b border-slate-100 border-l-4 ${cfg.border} hover:bg-slate-50/80 transition-all duration-150 relative`}
                     >
-                      <div className="md:col-span-4 flex items-center gap-3.5">
+                      {/* 1. CLIENTE */}
+                      <div className="md:col-span-3 flex items-center justify-start gap-3">
                         <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm border border-emerald-100 shrink-0">
                           {lead.name?.substring(0, 2).toUpperCase() || 'CL'}
                         </div>
@@ -457,11 +469,8 @@ export default function Leads() {
                         </div>
                       </div>
 
-                      <div className="md:col-span-2 flex items-center justify-between md:justify-start">
-                        {getStatusBadge(lead.status)}
-                      </div>
-
-                      <div className="md:col-span-3 flex flex-col gap-1.5">
+                      {/* 2. CONTACTO */}
+                      <div className="md:col-span-3 flex flex-col gap-1.5 justify-start items-start">
                         <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
                           <div className="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
                             <Mail size={11} className="text-blue-400" />
@@ -476,23 +485,31 @@ export default function Leads() {
                         </div>
                       </div>
 
-                      <div className="md:col-span-1">
-                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1 truncate block text-center">
+                      {/* 3. ESTADO */}
+                      <div className="md:col-span-2 flex items-center justify-start">
+                        {getStatusBadge(lead.status)}
+                      </div>
+
+                      {/* 4. ORIGEN */}
+                      <div className="md:col-span-1 flex items-center justify-start">
+                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1 truncate inline-block text-left">
                           {lead.source || 'Directo'}
                         </span>
                       </div>
 
-                      <div className="md:col-span-2 flex items-center justify-between md:justify-start">
+                      {/* 5. FECHA DE ALTA */}
+                      <div className="md:col-span-1 flex items-center justify-between md:justify-start">
                         <p className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
                           {new Date(lead.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                         <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors md:hidden" />
                       </div>
 
-                      <div className="hidden lg:flex items-center justify-end gap-1 absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* 6. ACCIONES RÁPIDAS */}
+                      <div className="md:col-span-2 flex items-center justify-start gap-1">
                         <button onClick={(e) => { e.stopPropagation(); openComposer(lead, 'whatsapp'); }} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="WhatsApp"><MessageCircle size={15} /></button>
                         <button onClick={(e) => { e.stopPropagation(); openComposer(lead, 'email'); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Email"><Mail size={15} /></button>
-                        <ChevronRight size={15} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                        <ChevronRight size={15} className="text-slate-300 group-hover:text-emerald-500 transition-colors hidden md:block" />
                       </div>
                     </div>
                   );

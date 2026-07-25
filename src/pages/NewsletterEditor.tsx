@@ -21,11 +21,16 @@ export default function NewsletterEditor() {
     const [status, setStatus] = useState<'draft' | 'sent'>('draft');
     const [notification, setNotification] = useState<{ title: string, message: string, type: 'success' | 'error' | 'info' } | null>(null);
 
+    const editorTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
     useEffect(() => {
         if (id) {
             let ignore = false;
             loadNewsletter(id, ignore);
-            return () => { ignore = true; };
+            return () => { 
+                ignore = true; 
+                if (editorTimerRef.current) clearInterval(editorTimerRef.current);
+            };
         }
     }, [id]);
 
@@ -44,9 +49,9 @@ export default function NewsletterEditor() {
                 setStatus((data as any).status);
 
                 // Wait for editor to be ready before loading design
-                const checkEditorInterval = setInterval(() => {
+                editorTimerRef.current = setInterval(() => {
                     if (emailEditorRef.current?.editor) {
-                        clearInterval(checkEditorInterval);
+                        if (editorTimerRef.current) clearInterval(editorTimerRef.current);
                         if ((data as any).design) {
                             emailEditorRef.current.editor.loadDesign((data as any).design);
                         }

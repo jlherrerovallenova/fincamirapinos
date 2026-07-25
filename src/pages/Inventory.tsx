@@ -11,11 +11,9 @@ import {
   Bath,
   AlertTriangle,
   Filter,
-  Copy,
   FileText,
   Trees,
-  Leaf,
-  Compass
+  Leaf
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -92,13 +90,6 @@ export default function Inventory() {
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const handleClone = (property: Property) => {
-    // Para clonar, pasamos los datos pero SIN el ID
-    const { id, created_at, ...cloneData } = property;
-    setEditingProperty(cloneData as any);
-    setIsModalOpen(true);
   };
 
   const filteredProperties = properties.filter(p => {

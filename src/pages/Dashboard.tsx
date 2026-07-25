@@ -105,7 +105,7 @@ export default function Dashboard() {
       const statsData = await dashboardService.getLeadsStats();
       if (!ignore) setStats(statsData);
 
-      const recentLeadsData = await dashboardService.getRecentLeads(5);
+      const recentLeadsData = await dashboardService.getRecentLeads(6);
       if (!ignore) setRecentLeads(recentLeadsData);
 
       // 2. CARGA DE AGENDA
@@ -389,8 +389,136 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* FILA DE CAPTACIÓN Y ACCESOS RÁPIDOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+      {/* FILA 1: AGENDA DE ACCIONES Y CLIENTES RECIENTES */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-6">
+        {/* WIDGET: AGENDA DE ACCIONES */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
+          <div className="p-6 border-b border-slate-100 flex flex-col gap-4 bg-white">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Calendar className="text-[#006c4a]" size={18} />
+                <h3 className="font-bold text-slate-900 text-sm tracking-tight">Agenda de Acciones</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/agenda')}
+                className="text-xs font-bold text-[#006c4a] hover:underline transition-all"
+              >
+                VER CALENDARIO
+              </button>
+            </div>
+
+            {/* PESTAÑAS (TABS) */}
+            <div className="p-1.5 bg-slate-50 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-100">
+              <div className="flex bg-white p-1 rounded-lg border border-slate-200 w-fit">
+                <TabButton 
+                  label="Hoy" 
+                  count={todayCount > 0 ? todayCount : undefined} 
+                  active={activeTab === 'hoy'} 
+                  onClick={() => setActiveTab('hoy')} 
+                />
+                <TabButton 
+                  label="Caducadas" 
+                  count={overdueCount} 
+                  active={activeTab === 'caducadas'} 
+                  onClick={() => setActiveTab('caducadas')} 
+                  variant="overdue" 
+                />
+                <TabButton 
+                  label="Esta semana" 
+                  count={weekCount > 0 ? weekCount : undefined} 
+                  active={activeTab === 'semana'} 
+                  onClick={() => setActiveTab('semana')} 
+                />
+                <TabButton 
+                  label="Correos" 
+                  count={unopenedEmailsCount} 
+                  active={activeTab === 'correos'} 
+                  onClick={() => setActiveTab('correos')} 
+                  variant="primary" 
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                {activeTab === 'correos' && (
+                  <select
+                    value={emailFilter}
+                    onChange={(e) => setEmailFilter(e.target.value as 'all' | 'unopened')}
+                    className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-semibold text-slate-700 bg-white shadow-sm cursor-pointer"
+                  >
+                    <option value="all">Todos los correos</option>
+                    <option value="unopened">Sin abrir</option>
+                  </select>
+                )}
+                <div className="relative flex-1 md:flex-none">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder={activeTab === 'correos' ? "Buscar por cliente o asunto..." : "Buscar por cliente o tarea..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-xs w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-slate-700 bg-white"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[500px]">
+            {activeTab === 'correos' ? (
+              <DashboardEmailTracking
+                filteredEmails={filteredEmails}
+                searchQuery={searchQuery}
+                loading={loading}
+                emailFilter={emailFilter}
+              />
+            ) : (
+              <DashboardAgenda
+                filteredAgenda={filteredAgenda}
+                searchQuery={searchQuery}
+                loading={loading}
+                activeTab={activeTab as 'hoy' | 'caducadas' | 'semana'}
+                onToggleTask={toggleTask}
+                onDeleteTask={deleteTask}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* WIDGET: CLIENTES RECIENTES */}
+        <div className="space-y-6 flex flex-col h-full">
+          <div className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden flex flex-col h-full min-h-[400px]">
+            <div className="p-6 border-b border-slate-150 flex justify-between items-center bg-white shrink-0">
+              <h3 className="font-bold text-slate-955 text-sm tracking-tight">Clientes Recientes</h3>
+              <button type="button" onClick={() => navigate('/leads')} className="text-[10px] font-bold text-slate-500 hover:text-slate-900 uppercase tracking-wider">
+                VER TODOS
+              </button>
+            </div>
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[500px]">
+              {recentLeads.map((lead) => (
+                <div
+                  key={lead.id}
+                  onClick={() => navigate(`/leads?search=${encodeURIComponent(lead.name)}`)}
+                  className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-xs border border-slate-200 group-hover:bg-emerald-50 group-hover:text-[#006c4a] group-hover:border-emerald-200 transition-colors">
+                      {lead.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-xs leading-none group-hover:text-[#006c4a] transition-colors">{lead.name}</h4>
+                      <span className="text-[10px] text-slate-400 font-medium mt-1 block">{lead.source || 'Sin origen'}</span>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-400 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FILA 2: RESUMEN DE CAPTACIÓN Y ACCESOS RÁPIDOS */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* TARJETA UNIFICADA DE MÉTRICAS Y CAPTACIÓN */}
         <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           {/* Header */}
@@ -546,134 +674,6 @@ export default function Dashboard() {
               </div>
               <span className="text-[11px] font-bold text-slate-700">Estadísticas</span>
             </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* WIDGET: AGENDA DE ACCIONES */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
-          <div className="p-6 border-b border-slate-100 flex flex-col gap-4 bg-white">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <Calendar className="text-[#006c4a]" size={18} />
-                <h3 className="font-bold text-slate-900 text-sm tracking-tight">Agenda de Acciones</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/agenda')}
-                className="text-xs font-bold text-[#006c4a] hover:underline transition-all"
-              >
-                VER CALENDARIO
-              </button>
-            </div>
-
-            {/* PESTAÑAS (TABS) */}
-            <div className="p-1.5 bg-slate-50 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-100">
-              <div className="flex bg-white p-1 rounded-lg border border-slate-200 w-fit">
-                <TabButton 
-                  label="Hoy" 
-                  count={todayCount > 0 ? todayCount : undefined} 
-                  active={activeTab === 'hoy'} 
-                  onClick={() => setActiveTab('hoy')} 
-                />
-                <TabButton 
-                  label="Caducadas" 
-                  count={overdueCount} 
-                  active={activeTab === 'caducadas'} 
-                  onClick={() => setActiveTab('caducadas')} 
-                  variant="overdue" 
-                />
-                <TabButton 
-                  label="Esta semana" 
-                  count={weekCount > 0 ? weekCount : undefined} 
-                  active={activeTab === 'semana'} 
-                  onClick={() => setActiveTab('semana')} 
-                />
-                <TabButton 
-                  label="Correos" 
-                  count={unopenedEmailsCount} 
-                  active={activeTab === 'correos'} 
-                  onClick={() => setActiveTab('correos')} 
-                  variant="primary" 
-                />
-              </div>
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                {activeTab === 'correos' && (
-                  <select
-                    value={emailFilter}
-                    onChange={(e) => setEmailFilter(e.target.value as 'all' | 'unopened')}
-                    className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-semibold text-slate-700 bg-white shadow-sm cursor-pointer"
-                  >
-                    <option value="all">Todos los correos</option>
-                    <option value="unopened">Sin abrir</option>
-                  </select>
-                )}
-                <div className="relative flex-1 md:flex-none">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                  <input
-                    type="text"
-                    placeholder={activeTab === 'correos' ? "Buscar por cliente o asunto..." : "Buscar por cliente o tarea..."}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-xs w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-slate-700 bg-white"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[500px]">
-            {activeTab === 'correos' ? (
-              <DashboardEmailTracking
-                filteredEmails={filteredEmails}
-                searchQuery={searchQuery}
-                loading={loading}
-                emailFilter={emailFilter}
-              />
-            ) : (
-              <DashboardAgenda
-                filteredAgenda={filteredAgenda}
-                searchQuery={searchQuery}
-                loading={loading}
-                activeTab={activeTab as 'hoy' | 'caducadas' | 'semana'}
-                onToggleTask={toggleTask}
-                onDeleteTask={deleteTask}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* BARRA LATERAL: LEADS */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-150 flex justify-between items-center bg-white">
-              <h3 className="font-bold text-slate-955 text-sm tracking-tight">Clientes Recientes</h3>
-              <button type="button" onClick={() => navigate('/leads')} className="text-[10px] font-bold text-slate-500 hover:text-slate-900 uppercase tracking-wider">
-                VER TODOS
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              {recentLeads.map((lead) => (
-                <div
-                  key={lead.id}
-                  onClick={() => navigate(`/leads?search=${encodeURIComponent(lead.name)}`)}
-                  className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-xs border border-slate-200 group-hover:bg-emerald-50 group-hover:text-[#006c4a] group-hover:border-emerald-200 transition-colors">
-                      {lead.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-xs leading-none group-hover:text-[#006c4a] transition-colors">{lead.name}</h4>
-                      <span className="text-[10px] text-slate-400 font-medium mt-1 block">{lead.source || 'Sin origen'}</span>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="text-slate-400 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

@@ -117,11 +117,11 @@ export default function DashboardAgenda({
         {/* Columna Mañana: 09:00 a 14:00 */}
         <div className="bg-slate-50/70 rounded-2xl p-3.5 border border-slate-100/85 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
-            <h4 className="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-700 flex items-center gap-2">
               <Sun size={15} className="text-amber-500" />
               Mañana (09:00 - 14:00)
             </h4>
-            <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
+            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
               {morningTaskCount} {morningTaskCount === 1 ? 'tarea' : 'tareas'}
             </span>
           </div>
@@ -132,7 +132,7 @@ export default function DashboardAgenda({
               const formattedHour = `${h.toString().padStart(2, '0')}:00`;
               return (
                 <div key={h} className="group flex items-start gap-2.5 p-2 bg-white rounded-xl border border-slate-100 shadow-2xs hover:border-amber-200 transition-all">
-                  <span className="text-[10px] font-black text-amber-700 bg-amber-50/80 px-2 py-1 rounded-lg border border-amber-100 shrink-0 font-mono mt-1">
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50/80 px-2 py-1 rounded-lg border border-amber-100 shrink-0 font-mono mt-1">
                     {formattedHour}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -161,11 +161,11 @@ export default function DashboardAgenda({
         {/* Columna Tarde: 15:00 a 20:00 */}
         <div className="bg-slate-50/70 rounded-2xl p-3.5 border border-slate-100/85 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
-            <h4 className="text-xs font-black uppercase tracking-wider text-indigo-700 flex items-center gap-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-2">
               <Sunset size={15} className="text-indigo-500" />
               Tarde (15:00 - 20:00)
             </h4>
-            <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200/60">
+            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200/60">
               {afternoonTaskCount} {afternoonTaskCount === 1 ? 'tarea' : 'tareas'}
             </span>
           </div>
@@ -176,7 +176,7 @@ export default function DashboardAgenda({
               const formattedHour = `${h.toString().padStart(2, '0')}:00`;
               return (
                 <div key={h} className="group flex items-start gap-2.5 p-2 bg-white rounded-xl border border-slate-100 shadow-2xs hover:border-indigo-200 transition-all">
-                  <span className="text-[10px] font-black text-indigo-700 bg-indigo-50/80 px-2 py-1 rounded-lg border border-indigo-100 shrink-0 font-mono mt-1">
+                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 px-2 py-1 rounded-lg border border-indigo-100 shrink-0 font-mono mt-1">
                     {formattedHour}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -221,19 +221,19 @@ export default function DashboardAgenda({
             >
               <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <h4 className={`text-xs font-black uppercase tracking-wider ${day.isToday ? 'text-[#006c4a]' : 'text-slate-700'}`}>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${day.isToday ? 'text-[#006c4a]' : 'text-slate-700'}`}>
                     {day.name}
                   </h4>
                   <span className="text-[10px] font-bold text-slate-400 capitalize">
                     {day.dateFormatted}
                   </span>
                   {day.isToday && (
-                    <span className="text-[9px] font-black uppercase tracking-widest bg-[#006c4a] text-white px-2 py-0.5 rounded-md">
+                    <span className="text-[9px] font-semibold uppercase tracking-widest bg-[#006c4a] text-white px-2 py-0.5 rounded-md">
                       Hoy
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${
                   dayTasks.length > 0 
                     ? 'text-[#006c4a] bg-emerald-50 border-emerald-200' 
                     : 'text-slate-400 bg-white border-slate-200'

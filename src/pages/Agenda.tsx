@@ -68,8 +68,10 @@ export default function Agenda() {
         leads: Array.isArray((item as any).leads) ? (item as any).leads[0] : (item as any).leads
       })) as AgendaItem[];
 
-      setItems(formattedData);
-      if (count !== null && !ignore) setTotalItems(count);
+      if (!ignore) {
+        setItems(formattedData);
+        if (count !== null) setTotalItems(count);
+      }
 
     } catch (error) {
       console.error('Error fetching agenda:', error);
