@@ -585,234 +585,237 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
           <div className="flex-1 overflow-y-auto lg:overflow-hidden bg-slate-50/50 flex flex-col min-h-0">
             {activeTab !== 'sale' ? (
               <div className="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                   
                   {/* COLUMNA IZQUIERDA: INFORMACIÓN DEL CLIENTE (7 cols en escritorio ~58%) */}
-                  <div className="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2 text-[#006c4a]">
-                      Información Personal
-                    </h3>
-                    <form onSubmit={handleUpdate} className="space-y-3">
-                      
-                      {/* FILA 1: NOMBRE Y TELÉFONO */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                        {/* NOMBRE COMPLETO */}
-                        <div className="md:col-span-7 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nombre Completo</label>
-                          <input
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
-                            required
-                          />
-                        </div>
-
-                        {/* TELÉFONO */}
-                        <div className="md:col-span-5 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Teléfono</label>
-                          <div className="relative flex gap-2">
-                            <div className="relative flex-1">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                              <input
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                placeholder="600..."
-                                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all"
-                              />
-                            </div>
-                            {formData.phone && (
-                              <a
-                                href={whatsappUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 bg-[#006c4a] text-white rounded-lg hover:bg-[#006c4a]/90 transition-all active:scale-95 shadow-md flex items-center justify-center shrink-0"
-                                title="Contactar por WhatsApp"
-                              >
-                                <MessageCircle size={16} />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* FILA 2: EMAIL Y ORIGEN */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                        {/* CORREO ELECTRÓNICO */}
-                        <div className="md:col-span-7 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
-                          <input
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
-                          />
-                        </div>
-
-                        {/* ORIGEN DEL CONTACTO */}
-                        <div className="md:col-span-5 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Origen del Contacto</label>
-                          <div className="relative group/source">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                              {(() => {
-                                const src = (formData.source || '').toLowerCase();
-                                if (src.includes('idealista')) return <img src="/idealista.png" className="w-4 h-4 object-contain rounded-sm" alt="" />;
-                                if (src.includes('web') || src.includes('google')) return <Globe className="text-blue-500" size={15} />;
-                                if (src.includes('social') || src.includes('redes') || src.includes('insta')) return <Smartphone className="text-purple-500" size={15} />;
-                                if (src.includes('referido')) return <Users className="text-emerald-500" size={15} />;
-                                if (src.includes('llamada')) return <Phone className="text-amber-500" size={15} />;
-                                return <Compass className="text-slate-400" size={15} />;
-                              })()}
-                            </div>
-                            <select
-                              name="source"
-                              value={formData.source}
-                              onChange={handleChange}
-                              className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all appearance-none cursor-pointer"
-                            >
-                              <option value="Idealista">Idealista</option>
-                              <option value="Web">Web</option>
-                              <option value="Google">Google</option>
-                              <option value="Redes Sociales">Redes Sociales</option>
-                              <option value="Referido">Referido</option>
-                              <option value="Llamada">Llamada</option>
-                              <option value="Otro">Otro</option>
-                            </select>
-                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
-                              <ChevronDown size={15} className="text-slate-400" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* FILA 3: FECHA DE ALTA Y ESTADO */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                        {/* FECHA DE ALTA */}
-                        <div className="md:col-span-5 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Fecha de Alta</label>
-                          <input
-                            type="date"
-                            name="created_at_date"
-                            value={formData.created_at_date}
-                            onChange={handleChange}
-                            className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
-                          />
-                        </div>
-
-                        {/* ESTADO ACTUAL */}
-                        <div className="md:col-span-7 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Estado Actual</label>
-                          <div className="relative">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                              <span className={`w-2.5 h-2.5 rounded-full ${statusCfg.dot}`} />
-                            </div>
-                            <select
-                              name="status"
-                              value={formData.status}
-                              onChange={handleChange}
-                              className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all appearance-none cursor-pointer"
-                            >
-                              <option value="new">Nuevo</option>
-                              <option value="contacted">Contactado</option>
-                              <option value="qualified">Cualificado</option>
-                              <option value="visiting">Visitando</option>
-                              <option value="closed">Venta realizada</option>
-                              <option value="lost">Perdido</option>
-                            </select>
-                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
-                              <ChevronDown size={15} className="text-slate-400" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* FILA 4: INTERESADO EN & NEWSLETTERS */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1">
-                        {/* INTERESADO EN */}
-                        <div className="md:col-span-7 space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Interesado en</label>
-                          <div className="flex flex-wrap gap-1.5 mt-0.5">
-                            {INTERESTED_OPTIONS.map(option => {
-                              const isSelected = formData.interested_in.split(', ').includes(option.value);
-                              const upper = option.value.toUpperCase();
-                              const isOlivo = upper.includes('OLIVO');
-                              const isParcela = upper.includes('PARCELA');
-                              const isArce = !isParcela && upper.includes('ARCE');
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onClick={() => handleInterestedInToggle(option.value)}
-                                  className={`px-3 py-1 rounded-full text-xs font-extrabold transition-all border flex items-center gap-1.5 ${
-                                    isSelected
-                                      ? 'bg-[#006c4a] text-white border-[#006c4a] shadow-sm'
-                                      : isOlivo
-                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:border-[#006c4a]'
-                                        : isArce
-                                          ? 'bg-amber-50 text-amber-800 border-amber-200/80 hover:border-[#006c4a]'
-                                          : 'bg-blue-50 text-blue-800 border-blue-200/80 hover:border-[#006c4a]'
-                                  }`}
-                                >
-                                  {isOlivo && <Trees size={13} className={isSelected ? 'text-emerald-200' : 'text-emerald-600'} />}
-                                  {isArce && <Leaf size={13} className={isSelected ? 'text-amber-200' : 'text-amber-600'} />}
-                                  <span>{option.label}</span>
-                                </button>
-                              );
-                            })}
-                            {formData.interested_in === '' && (
-                              <span className="text-[10px] text-slate-400 italic ml-1 self-center">Sin especificar</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* NEWSLETTERS */}
-                        <div className="md:col-span-5 flex items-center justify-between px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg shadow-sm self-end h-[34px]">
-                          <div className="flex items-center gap-2">
-                            <Mail className="text-[#006c4a]" size={15} />
-                            <span className="text-xs font-bold text-slate-700">Newsletters</span>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
+                  <div className="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div>
+                      <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2 text-[#006c4a]">
+                        Información Personal
+                      </h3>
+                      <form onSubmit={handleUpdate} id="lead-info-form" className="space-y-3">
+                        
+                        {/* FILA 1: NOMBRE Y TELÉFONO */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          {/* NOMBRE COMPLETO */}
+                          <div className="md:col-span-7 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nombre Completo</label>
                             <input
-                              type="checkbox"
-                              className="sr-only peer"
-                              checked={formData.is_subscribed}
-                              onChange={(e) => setFormData({ ...formData, is_subscribed: e.target.checked })}
+                              name="name"
+                              value={formData.name}
+                              onChange={handleChange}
+                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
+                              required
                             />
-                            <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#006c4a]"></div>
-                          </label>
+                          </div>
+
+                          {/* TELÉFONO */}
+                          <div className="md:col-span-5 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Teléfono</label>
+                            <div className="relative flex gap-2">
+                              <div className="relative flex-1">
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                                <input
+                                  name="phone"
+                                  value={formData.phone}
+                                  onChange={handleChange}
+                                  placeholder="600..."
+                                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all"
+                                />
+                              </div>
+                              {formData.phone && (
+                                <a
+                                  href={whatsappUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 bg-[#006c4a] text-white rounded-lg hover:bg-[#006c4a]/90 transition-all active:scale-95 shadow-md flex items-center justify-center shrink-0"
+                                  title="Contactar por WhatsApp"
+                                >
+                                  <MessageCircle size={16} />
+                                </a>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* NOTAS INTERNAS */}
-                      <div className="space-y-1 pt-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Notas Internas</label>
-                        <textarea
-                          name="notes"
-                          value={formData.notes}
-                          onChange={handleChange}
-                          rows={3}
-                          className="w-full mt-0.5 px-3 py-2 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all resize-none"
-                          placeholder="Añade detalles relevantes sobre el cliente..."
-                        />
-                      </div>
+                        {/* FILA 2: EMAIL Y ORIGEN */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          {/* CORREO ELECTRÓNICO */}
+                          <div className="md:col-span-7 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                            <input
+                              name="email"
+                              value={formData.email}
+                              onChange={handleChange}
+                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
+                            />
+                          </div>
 
-                      {/* GUARDAR CAMBIOS */}
-                      <div className="pt-2 border-t border-slate-100 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="bg-[#006c4a] hover:bg-[#006c4a]/90 text-white px-5 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-700/10"
-                        >
-                          {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                          Guardar cambios
-                        </button>
-                      </div>
-                    </form>
+                          {/* ORIGEN DEL CONTACTO */}
+                          <div className="md:col-span-5 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Origen del Contacto</label>
+                            <div className="relative group/source">
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                {(() => {
+                                  const src = (formData.source || '').toLowerCase();
+                                  if (src.includes('idealista')) return <img src="/idealista.png" className="w-4 h-4 object-contain rounded-sm" alt="" />;
+                                  if (src.includes('web') || src.includes('google')) return <Globe className="text-blue-500" size={15} />;
+                                  if (src.includes('social') || src.includes('redes') || src.includes('insta')) return <Smartphone className="text-purple-500" size={15} />;
+                                  if (src.includes('referido')) return <Users className="text-emerald-500" size={15} />;
+                                  if (src.includes('llamada')) return <Phone className="text-amber-500" size={15} />;
+                                  return <Compass className="text-slate-400" size={15} />;
+                                })()}
+                              </div>
+                              <select
+                                name="source"
+                                value={formData.source}
+                                onChange={handleChange}
+                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="Idealista">Idealista</option>
+                                <option value="Web">Web</option>
+                                <option value="Google">Google</option>
+                                <option value="Redes Sociales">Redes Sociales</option>
+                                <option value="Referido">Referido</option>
+                                <option value="Llamada">Llamada</option>
+                                <option value="Otro">Otro</option>
+                              </select>
+                              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                                <ChevronDown size={15} className="text-slate-400" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* FILA 3: FECHA DE ALTA Y ESTADO */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          {/* FECHA DE ALTA */}
+                          <div className="md:col-span-5 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Fecha de Alta</label>
+                            <input
+                              type="date"
+                              name="created_at_date"
+                              value={formData.created_at_date}
+                              onChange={handleChange}
+                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
+                            />
+                          </div>
+
+                          {/* ESTADO ACTUAL */}
+                          <div className="md:col-span-7 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Estado Actual</label>
+                            <div className="relative">
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                <span className={`w-2.5 h-2.5 rounded-full ${statusCfg.dot}`} />
+                              </div>
+                              <select
+                                name="status"
+                                value={formData.status}
+                                onChange={handleChange}
+                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="new">Nuevo</option>
+                                <option value="contacted">Contactado</option>
+                                <option value="qualified">Cualificado</option>
+                                <option value="visiting">Visitando</option>
+                                <option value="closed">Venta realizada</option>
+                                <option value="lost">Perdido</option>
+                              </select>
+                              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                                <ChevronDown size={15} className="text-slate-400" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* FILA 4: INTERESADO EN & NEWSLETTERS */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1">
+                          {/* INTERESADO EN */}
+                          <div className="md:col-span-7 space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Interesado en</label>
+                            <div className="flex flex-wrap gap-1.5 mt-0.5">
+                              {INTERESTED_OPTIONS.map(option => {
+                                const isSelected = formData.interested_in.split(', ').includes(option.value);
+                                const upper = option.value.toUpperCase();
+                                const isOlivo = upper.includes('OLIVO');
+                                const isParcela = upper.includes('PARCELA');
+                                const isArce = !isParcela && upper.includes('ARCE');
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => handleInterestedInToggle(option.value)}
+                                    className={`px-3 py-1 rounded-full text-xs font-extrabold transition-all border flex items-center gap-1.5 ${
+                                      isSelected
+                                        ? 'bg-[#006c4a] text-white border-[#006c4a] shadow-sm'
+                                        : isOlivo
+                                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:border-[#006c4a]'
+                                          : isArce
+                                            ? 'bg-amber-50 text-amber-800 border-amber-200/80 hover:border-[#006c4a]'
+                                            : 'bg-blue-50 text-blue-800 border-blue-200/80 hover:border-[#006c4a]'
+                                    }`}
+                                  >
+                                    {isOlivo && <Trees size={13} className={isSelected ? 'text-emerald-200' : 'text-emerald-600'} />}
+                                    {isArce && <Leaf size={13} className={isSelected ? 'text-amber-200' : 'text-amber-600'} />}
+                                    <span>{option.label}</span>
+                                  </button>
+                                );
+                              })}
+                              {formData.interested_in === '' && (
+                                <span className="text-[10px] text-slate-400 italic ml-1 self-center">Sin especificar</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* NEWSLETTERS */}
+                          <div className="md:col-span-5 flex items-center justify-between px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg shadow-sm self-end h-[34px]">
+                            <div className="flex items-center gap-2">
+                              <Mail className="text-[#006c4a]" size={15} />
+                              <span className="text-xs font-bold text-slate-700">Newsletters</span>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={formData.is_subscribed}
+                                onChange={(e) => setFormData({ ...formData, is_subscribed: e.target.checked })}
+                              />
+                              <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#006c4a]"></div>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* NOTAS INTERNAS */}
+                        <div className="space-y-1 pt-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Notas Internas</label>
+                          <textarea
+                            name="notes"
+                            value={formData.notes}
+                            onChange={handleChange}
+                            rows={3}
+                            className="w-full mt-0.5 px-3 py-2 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all resize-none"
+                            placeholder="Añade detalles relevantes sobre el cliente..."
+                          />
+                        </div>
+                      </form>
+                    </div>
+
+                    {/* GUARDAR CAMBIOS */}
+                    <div className="pt-3 border-t border-slate-100 flex justify-end shrink-0">
+                      <button
+                        type="submit"
+                        form="lead-info-form"
+                        disabled={loading}
+                        className="bg-[#006c4a] hover:bg-[#006c4a]/90 text-white px-5 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-700/10"
+                      >
+                        {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                        Guardar cambios
+                      </button>
+                    </div>
                   </div>
 
                   {/* COLUMNA DERECHA: AGENDA Y ACCIONES (5 cols en escritorio ~42%) */}
-                  <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3 min-h-[520px]">
+                  <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-3 h-full min-h-[520px]">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-2 text-[#006c4a]">
                       <CalendarIcon size={16} /> Agenda de Acciones
                     </h3>
