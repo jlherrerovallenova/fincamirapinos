@@ -604,7 +604,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                               name="name"
                               value={formData.name}
                               onChange={handleChange}
-                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
+                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-normal transition-all"
                               required
                             />
                           </div>
@@ -620,7 +620,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                                   value={formData.phone}
                                   onChange={handleChange}
                                   placeholder="600..."
-                                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all"
+                                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-normal transition-all"
                                 />
                               </div>
                               {formData.phone && (
@@ -647,7 +647,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                               name="email"
                               value={formData.email}
                               onChange={handleChange}
-                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
+                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-normal transition-all"
                             />
                           </div>
 
@@ -670,7 +670,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                                 name="source"
                                 value={formData.source}
                                 onChange={handleChange}
-                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all appearance-none cursor-pointer"
+                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-normal transition-all appearance-none cursor-pointer"
                               >
                                 <option value="Idealista">Idealista</option>
                                 <option value="Web">Web</option>
@@ -697,7 +697,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                               name="created_at_date"
                               value={formData.created_at_date}
                               onChange={handleChange}
-                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-medium transition-all"
+                              className="w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg py-1.5 px-3 text-sm text-slate-800 font-normal transition-all"
                             />
                           </div>
 
@@ -712,7 +712,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                                 name="status"
                                 value={formData.status}
                                 onChange={handleChange}
-                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all appearance-none cursor-pointer"
+                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-normal transition-all appearance-none cursor-pointer"
                               >
                                 <option value="new">Nuevo</option>
                                 <option value="contacted">Contactado</option>
@@ -745,7 +745,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                                     key={option.value}
                                     type="button"
                                     onClick={() => handleInterestedInToggle(option.value)}
-                                    className={`px-3 py-1 rounded-full text-xs font-extrabold transition-all border flex items-center gap-1.5 ${
+                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all border flex items-center gap-1.5 ${
                                       isSelected
                                         ? 'bg-[#006c4a] text-white border-[#006c4a] shadow-sm'
                                         : isOlivo
@@ -771,7 +771,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                           <div className="md:col-span-5 flex items-center justify-between px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg shadow-sm self-end h-[34px]">
                             <div className="flex items-center gap-2">
                               <Mail className="text-[#006c4a]" size={15} />
-                              <span className="text-xs font-bold text-slate-700">Newsletters</span>
+                              <span className="text-xs font-normal text-slate-700">Newsletters</span>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                               <input
@@ -793,7 +793,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                             value={formData.notes}
                             onChange={handleChange}
                             rows={3}
-                            className="w-full mt-0.5 px-3 py-2 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-medium transition-all resize-none"
+                            className="w-full mt-0.5 px-3 py-2 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 rounded-lg text-sm text-slate-800 font-normal transition-all resize-none"
                             placeholder="Añade detalles relevantes sobre el cliente..."
                           />
                         </div>
@@ -827,7 +827,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                           <select
                             value={newTask.type}
                             onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
-                            className="w-full bg-white border border-slate-200 rounded-lg text-xs font-medium py-1.5 px-2 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 appearance-none cursor-pointer"
+                            className="w-full bg-white border border-slate-200 rounded-lg text-xs font-normal py-1.5 px-2 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 appearance-none cursor-pointer"
                           >
                             <option value="Llamada">Llamada</option>
                             <option value="Email">Email</option>
@@ -841,7 +841,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                             type="date"
                             value={newTask.date}
                             onChange={(e) => setNewTask({ ...newTask, date: e.target.value })}
-                            className="w-full bg-white border border-slate-200 rounded-lg text-xs py-1.5 px-2 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 font-medium"
+                            className="w-full bg-white border border-slate-200 rounded-lg text-xs py-1.5 px-2 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 font-normal"
                           />
                         </div>
                         <div className="col-span-3">
@@ -849,7 +849,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                             type="time"
                             value={newTask.time}
                             onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
-                            className="w-full bg-white border border-slate-200 rounded-lg text-xs py-1.5 px-1.5 text-center outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 font-medium"
+                            className="w-full bg-white border border-slate-200 rounded-lg text-xs py-1.5 px-1.5 text-center outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 font-normal"
                           />
                         </div>
                       </div>
@@ -859,7 +859,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                           placeholder={editingTaskId ? "Editando tarea..." : "Nueva tarea pendiente..."}
                           value={newTask.title}
                           onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                          className="flex-1 bg-white border border-slate-200 rounded-lg text-xs p-1.5 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-900 placeholder-slate-400 min-w-0"
+                          className="flex-1 bg-white border border-slate-200 rounded-lg text-xs p-1.5 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-900 font-normal placeholder-slate-400 min-w-0"
                         />
                         {newTask.type === 'Llamada' && (
                           <div className="flex bg-white border border-slate-200 rounded-lg p-0.5 shrink-0">
