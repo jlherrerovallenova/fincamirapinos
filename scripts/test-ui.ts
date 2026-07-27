@@ -7,7 +7,7 @@ async function run() {
   console.log('         INICIANDO PRUEBA DE UI CON PUPPETEER     ');
   console.log('==================================================');
 
-  const url = 'http://localhost:5175/';
+  const url = 'http://localhost:5173/';
   console.log(`Conectando a la app en: ${url}...`);
 
   const browser = await puppeteer.launch({
@@ -43,7 +43,7 @@ async function run() {
     console.log(`¿Logotipo corporativo presente?: ${hasLogo ? 'SÍ' : 'NO'}`);
 
     // Capturar pantalla
-    const artifactDir = 'C:\\Users\\María Del Mar Rivas\\.gemini\\antigravity\\brain\\0c9f3499-06c6-46ee-a546-93528974b60f';
+    const artifactDir = 'C:\\Users\\Celia\\.gemini\\antigravity\\brain\\2a4feed4-0133-4553-aa4f-561aed920bdc';
     const screenshotPath = path.join(artifactDir, 'login_screenshot.png');
     
     console.log(`Guardando captura de pantalla en: ${screenshotPath}`);
