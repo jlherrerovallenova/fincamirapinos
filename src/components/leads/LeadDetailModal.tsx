@@ -821,31 +821,37 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
                     </h3>
 
                     {/* Formulario Inline Compacto */}
-                    <div className="grid grid-cols-1 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
-                      <div className="flex gap-2">
-                        <select
-                          value={newTask.type}
-                          onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
-                          className="bg-white border border-slate-200 rounded-lg text-xs font-medium p-1.5 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 appearance-none pr-6 relative shrink-0"
-                        >
-                          <option value="Llamada">Llamada</option>
-                          <option value="Email">Email</option>
-                          <option value="WhatsApp">WhatsApp</option>
-                          <option value="Visita">Visita</option>
-                          <option value="Reunión">Reunión</option>
-                        </select>
-                        <input
-                          type="date"
-                          value={newTask.date}
-                          onChange={(e) => setNewTask({ ...newTask, date: e.target.value })}
-                          className="flex-1 bg-white border border-slate-200 rounded-lg text-xs p-1.5 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 min-w-0"
-                        />
-                        <input
-                          type="time"
-                          value={newTask.time}
-                          onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
-                          className="w-16 bg-white border border-slate-200 rounded-lg text-xs p-1.5 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 shrink-0"
-                        />
+                    <div className="grid grid-cols-1 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
+                      <div className="grid grid-cols-12 gap-2">
+                        <div className="col-span-4">
+                          <select
+                            value={newTask.type}
+                            onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
+                            className="w-full bg-white border border-slate-200 rounded-lg text-xs font-medium py-1.5 px-2 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 appearance-none cursor-pointer"
+                          >
+                            <option value="Llamada">Llamada</option>
+                            <option value="Email">Email</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Visita">Visita</option>
+                            <option value="Reunión">Reunión</option>
+                          </select>
+                        </div>
+                        <div className="col-span-5">
+                          <input
+                            type="date"
+                            value={newTask.date}
+                            onChange={(e) => setNewTask({ ...newTask, date: e.target.value })}
+                            className="w-full bg-white border border-slate-200 rounded-lg text-xs py-1.5 px-2 outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 font-medium"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="time"
+                            value={newTask.time}
+                            onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
+                            className="w-full bg-white border border-slate-200 rounded-lg text-xs py-1.5 px-1.5 text-center outline-none focus:border-[#006c4a] focus:ring-1 focus:ring-[#006c4a]/20 text-slate-700 font-medium"
+                          />
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <input
