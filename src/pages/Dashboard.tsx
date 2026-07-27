@@ -126,29 +126,41 @@ export default function Dashboard() {
   };
 
   // --- LÓGICA DE FILTRADO Y PESTAÑAS ---
-  const filteredAgenda = agenda.filter(task => {
-    // 1. Filtro por búsqueda de cliente o título
-    const matchesSearch =
-      task.leads?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.title.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredAgenda = agenda
+    .filter(task => {
+      // 1. Filtro por búsqueda de cliente o título
+      const matchesSearch =
+        task.leads?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    // 2. Filtro por Tab (Hoy vs Caducadas vs Semana)
-    const taskDate = new Date(task.due_date).getTime();
+      // 2. Filtro por Tab (Hoy vs Caducadas vs Semana)
+      const taskDate = new Date(task.due_date).getTime();
 
-    if (activeTab === 'hoy') {
-      return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endTodayTime;
-    }
-    if (activeTab === 'caducadas') {
-      return taskDate < dateBoundaries.startTodayTime;
-    }
-    if (activeTab === 'semana') {
-      return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endWeekTime;
-    }
+      if (activeTab === 'hoy') {
+        return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endTodayTime;
+      }
+      if (activeTab === 'caducadas') {
+        return taskDate < dateBoundaries.startTodayTime;
+      }
+      if (activeTab === 'semana') {
+        return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endWeekTime;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.due_date).getTime();
+      const dateB = new Date(b.due_date).getTime();
+
+      if (activeTab === 'caducadas') {
+        // De más nueva a más antigua
+        return dateB - dateA;
+      }
+      // De más antigua a más nueva
+      return dateA - dateB;
+    });
 
   const filteredEmails = emails
     .filter(email => {
