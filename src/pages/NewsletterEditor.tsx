@@ -1,5 +1,5 @@
 // src/pages/NewsletterEditor.tsx
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import EmailEditor from 'react-email-editor';
