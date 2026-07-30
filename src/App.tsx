@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Leads = lazy(() => import('./pages/Leads'));
 const LeadDetail = lazy(() => import('./pages/LeadDetail'));
 const Pipeline = lazy(() => import('./pages/Pipeline'));
+const Sales = lazy(() => import('./pages/Sales'));
 const Inventory = lazy(() => import('./pages/Inventory'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -42,6 +43,7 @@ function App() {
           <Route path="/leads" element={<Suspense fallback={<PageLoader />}><Leads /></Suspense>} />
           <Route path="/leads/:id" element={<Suspense fallback={<PageLoader />}><LeadDetail /></Suspense>} />
           <Route path="/pipeline" element={<Suspense fallback={<PageLoader />}><Pipeline /></Suspense>} />
+          <Route path="/sales" element={<Suspense fallback={<PageLoader />}><Sales /></Suspense>} />
           <Route path="/inventory" element={<Suspense fallback={<PageLoader />}><Inventory /></Suspense>} />
           <Route path="/agenda" element={<Suspense fallback={<PageLoader />}><Agenda /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />

@@ -21,7 +21,9 @@ import {
   Mail, 
   AlertTriangle, 
   Clock,
-  BarChart3
+  BarChart3,
+  TrendingUp,
+  BadgeDollarSign
 } from 'lucide-react';
 import { useAgendaAlerts } from '../hooks/useAgendaAlerts';
 
@@ -98,35 +100,36 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden">
-      <ConnectionStatus />
+    <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden selection:bg-emerald-500 selection:text-white">
+      <AppNotification
+        show={showNotification}
+        title={notificationData.title}
+        message={notificationData.message}
+        type={notificationData.type}
+        onClose={() => setShowNotification(false)}
+      />
 
-      {/* Panel de depuración ultra-intrusivo para ver qué crashea la conexión, oculto en prod */}
+      <ConnectionStatus />
       {import.meta.env.DEV && <DebugPanel />}
 
-      {showNotification && (
-        <AppNotification
-          title={notificationData.title}
-          message={notificationData.message}
-          type={notificationData.type}
-          onClose={() => setShowNotification(false)}
-        />
-      )}
-
+      {/* OVERLAY PARA MÓVIL */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 z-30 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
           onClick={closeSidebar}
         />
       )}
 
+      {/* SIDEBAR */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl 
-        transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 bg-slate-900 text-slate-300 flex flex-col justify-between
+        transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+        transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
+        border-r border-slate-800 shrink-0
       `}>
 
-        <div className="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-emerald-500 rounded flex items-center justify-center text-white font-bold mr-3 shadow-lg shadow-emerald-900/20">
               M
@@ -143,7 +146,8 @@ export default function MainLayout() {
           <SidebarItem to="/" icon={<LayoutDashboard size={18} />} label="Panel de Control" active={location.pathname === '/'} onClick={closeSidebar} />
           <SidebarItem to="/leads" icon={<Users size={18} />} label="Clientes" active={location.pathname.startsWith('/leads')} onClick={closeSidebar} />
           <SidebarItem to="/inventory" icon={<Map size={18} />} label="Viviendas" active={location.pathname === '/inventory'} onClick={closeSidebar} />
-          <SidebarItem to="/pipeline" icon={<Calendar size={18} />} label="Ventas" active={location.pathname === '/pipeline'} onClick={closeSidebar} />
+          <SidebarItem to="/pipeline" icon={<TrendingUp size={18} />} label="Túnel de Ventas" active={location.pathname === '/pipeline'} onClick={closeSidebar} />
+          <SidebarItem to="/sales" icon={<BadgeDollarSign size={18} />} label="Ventas" active={location.pathname === '/sales'} onClick={closeSidebar} />
           <SidebarItem to="/stats" icon={<BarChart3 size={18} />} label="Estadísticas" active={location.pathname === '/stats'} onClick={closeSidebar} />
 
           <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 mt-6">Gestión</p>
