@@ -81,19 +81,77 @@ export default function Sales() {
   const fetchSales = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Obtener operaciones explícitas en la tabla 'sales' (relacionadas con 'inventory')
+      const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select(`
           *,
           lead:leads(id, name, phone, email),
-          property:properties(id, numero_vivienda, modelo)
+          property:inventory(id, numero_vivienda, modelo)
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setSales((data as any[]) || []);
+      if (salesError) console.error('Error al cargar ventas:', salesError);
+
+      // 2. Obtener clientes en estado 'closed' o que tengan 'property_id' asignado en 'leads'
+      const { data: closedLeads, error: leadsError } = await supabase
+        .from('leads')
+        .select(`
+          id, name, phone, email, status, sale_status, property_id, created_at,
+          property:inventory(id, numero_vivienda, modelo, precio)
+        `)
+        .or('status.eq.closed,property_id.not.is.null');
+
+      if (leadsError) console.error('Error al cargar clientes ganados:', leadsError);
+
+      // Combinar operaciones: 우선 de 'sales' y completar con 'closedLeads' si no existen en 'sales'
+      const salesMap = new Map<string, any>();
+
+      (salesData || []).forEach((s: any) => {
+        if (s.lead_id) {
+          salesMap.set(s.lead_id, {
+            id: s.id,
+            lead_id: s.lead_id,
+            property_id: s.property_id,
+            sale_price: s.sale_price || s.property?.precio || 0,
+            sale_status: s.sale_status || 'reserva',
+            contract_date: s.contract_date,
+            escritura_date: s.escritura_date,
+            created_at: s.created_at,
+            lead: s.lead,
+            property: s.property
+          });
+        }
+      });
+
+      (closedLeads || []).forEach((l: any) => {
+        if (l.property_id && !salesMap.has(l.id)) {
+          salesMap.set(l.id, {
+            id: `lead-sale-${l.id}`,
+            lead_id: l.id,
+            property_id: l.property_id,
+            sale_price: l.property?.precio || 0,
+            sale_status: l.sale_status || (l.status === 'closed' ? 'completada' : 'reserva'),
+            created_at: l.created_at,
+            lead: {
+              id: l.id,
+              name: l.name,
+              phone: l.phone,
+              email: l.email
+            },
+            property: l.property ? {
+              id: String(l.property.id),
+              numero_vivienda: l.property.numero_vivienda,
+              modelo: l.property.modelo
+            } : null
+          });
+        }
+      });
+
+      const combinedSales = Array.from(salesMap.values()).filter(s => s.property);
+      setSales(combinedSales);
     } catch (err) {
-      console.error('Error al cargar ventas:', err);
+      console.error('Error general al cargar operaciones de venta:', err);
     } finally {
       setIsLoading(false);
     }
