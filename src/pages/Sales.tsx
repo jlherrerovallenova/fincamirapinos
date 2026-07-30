@@ -6,7 +6,7 @@ import {
   Search, 
   User, 
   Home, 
-  Map, 
+  Map as MapPin, 
   CheckCircle, 
   Clock, 
   FileText, 
@@ -81,30 +81,18 @@ export default function Sales() {
   const fetchSales = async () => {
     setIsLoading(true);
     try {
-      // 1. Obtener operaciones explícitas en la tabla 'sales' (relacionadas con 'inventory')
+      // 1. Obtener operaciones en la tabla 'sales' con join a inventory
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select(`
           *,
           lead:leads(id, name, phone, email),
-          property:inventory(id, numero_vivienda, modelo)
+          property:inventory(id, numero_vivienda, modelo, precio)
         `)
         .order('created_at', { ascending: false });
 
-      if (salesError) console.error('Error al cargar ventas:', salesError);
+      console.log('[Ventas] sales data:', salesData, salesError);
 
-      // 2. Obtener clientes en estado 'closed' o que tengan 'property_id' asignado en 'leads'
-      const { data: closedLeads, error: leadsError } = await supabase
-        .from('leads')
-        .select(`
-          id, name, phone, email, status, sale_status, property_id, created_at,
-          property:inventory(id, numero_vivienda, modelo, precio)
-        `)
-        .or('status.eq.closed,property_id.not.is.null');
-
-      if (leadsError) console.error('Error al cargar clientes ganados:', leadsError);
-
-      // Combinar operaciones: 우선 de 'sales' y completar con 'closedLeads' si no existen en 'sales'
       const salesMap = new Map<string, any>();
 
       (salesData || []).forEach((s: any) => {
@@ -124,7 +112,37 @@ export default function Sales() {
         }
       });
 
-      (closedLeads || []).forEach((l: any) => {
+      // 2. Buscar clientes en estado 'closed' (GANADOS)
+      const { data: closedLeads, error: closedError } = await supabase
+        .from('leads')
+        .select(`
+          id, name, phone, email, status, sale_status, property_id, created_at,
+          property:inventory(id, numero_vivienda, modelo, precio)
+        `)
+        .eq('status', 'closed');
+
+      console.log('[Ventas] closed leads:', closedLeads, closedError);
+
+      // 3. Buscar clientes con property_id asignado (cualquier estado)
+      const { data: assignedLeads, error: assignedError } = await supabase
+        .from('leads')
+        .select(`
+          id, name, phone, email, status, sale_status, property_id, created_at,
+          property:inventory(id, numero_vivienda, modelo, precio)
+        `)
+        .not('property_id', 'is', null);
+
+      console.log('[Ventas] assigned leads (con vivienda):', assignedLeads, assignedError);
+
+      // Combinar closedLeads + assignedLeads sin duplicados, y sin repetir lo que ya está en salesMap
+      const allLeads = [
+        ...(closedLeads || []),
+        ...(assignedLeads || []).filter(l => 
+          !(closedLeads || []).some((c: any) => c.id === l.id)
+        )
+      ];
+
+      allLeads.forEach((l: any) => {
         if (l.property_id && !salesMap.has(l.id)) {
           salesMap.set(l.id, {
             id: `lead-sale-${l.id}`,
@@ -149,6 +167,7 @@ export default function Sales() {
       });
 
       const combinedSales = Array.from(salesMap.values()).filter(s => s.property);
+      console.log('[Ventas] combinedSales final:', combinedSales);
       setSales(combinedSales);
     } catch (err) {
       console.error('Error general al cargar operaciones de venta:', err);
@@ -300,7 +319,7 @@ export default function Sales() {
                         >
                           {sale.property?.modelo === 'PARCELA' ? (
                             <>
-                              <Map size={14} className="text-slate-400" />
+                              <MapPin size={14} className="text-slate-400" />
                               <span className="font-bold">Parcela {sale.property?.numero_vivienda}</span>
                             </>
                           ) : (
