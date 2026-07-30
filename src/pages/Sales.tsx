@@ -174,13 +174,19 @@ export default function Sales() {
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${statusFilter === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
           >
-            Todas las operaciones
+            Todas las operaciones ({sales.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('reserva')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${statusFilter === 'reserva' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50'}`}
+          >
+            Reservas ({sales.filter(s => s.sale_status === 'reserva').length})
           </button>
           <button
             onClick={() => setStatusFilter('completada')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${statusFilter === 'completada' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'}`}
           >
-            Ventas Cerradas
+            Vendidas ({sales.filter(s => s.sale_status === 'completada').length})
           </button>
         </div>
       </div>
