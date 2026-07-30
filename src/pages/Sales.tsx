@@ -73,6 +73,8 @@ export default function Sales() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSales();
@@ -183,6 +185,24 @@ export default function Sales() {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  const updateSaleStatus = async (sale: SaleItem, newStatus: SaleItem['sale_status']) => {
+    setUpdatingId(sale.id);
+    setEditingStatusId(null);
+    try {
+      // Si el id es real de la tabla sales (no prefijado con 'lead-sale-')
+      if (!sale.id.startsWith('lead-sale-')) {
+        await (supabase as any).from('sales').update({ sale_status: newStatus }).eq('id', sale.id);
+      }
+      // Actualizar también el campo sale_status del lead
+      await (supabase as any).from('leads').update({ sale_status: newStatus }).eq('id', sale.lead_id);
+      setSales(prev => prev.map(s => s.id === sale.id ? { ...s, sale_status: newStatus } : s));
+    } catch (err) {
+      console.error('Error al actualizar estado:', err);
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const filteredSales = sales.filter(sale => {
@@ -346,12 +366,52 @@ export default function Sales() {
                         {formatDate(sale.escritura_date || sale.contract_date)}
                       </td>
                       <td className="px-6 py-3.5 text-center">
-                        <button 
-                          className="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 px-3 py-1.5 rounded-xl transition-colors shadow-sm"
-                          onClick={() => navigate(`/leads?search=${encodeURIComponent(sale.lead?.name || '')}`)}
-                        >
-                          Ver Ficha Cliente
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          {/* Selector de estado */}
+                          {editingStatusId === sale.id ? (
+                            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl shadow-lg p-1">
+                              {(Object.keys(STATUS_CONFIG) as Array<SaleItem['sale_status']>).map(st => (
+                                <button
+                                  key={st}
+                                  onClick={() => updateSaleStatus(sale, st)}
+                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
+                                    sale.sale_status === st
+                                      ? STATUS_CONFIG[st].color + ' scale-105 shadow-sm'
+                                      : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  {STATUS_CONFIG[st].label}
+                                </button>
+                              ))}
+                              <button
+                                onClick={() => setEditingStatusId(null)}
+                                className="text-[10px] text-slate-400 hover:text-slate-600 px-1.5 py-1 rounded-lg hover:bg-slate-100"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-xl transition-colors shadow-sm flex items-center gap-1.5"
+                              onClick={() => setEditingStatusId(sale.id)}
+                              title="Cambiar estado"
+                              disabled={updatingId === sale.id}
+                            >
+                              {updatingId === sale.id ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <FileText size={12} />
+                              )}
+                              Estado
+                            </button>
+                          )}
+                          <button
+                            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 px-2.5 py-1.5 rounded-xl transition-colors shadow-sm"
+                            onClick={() => navigate(`/leads?search=${encodeURIComponent(sale.lead?.name || '')}`)}
+                          >
+                            Ver Ficha
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
