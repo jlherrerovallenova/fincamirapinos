@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { CheckCircle2, AlertCircle, X, Info } from 'lucide-react';
 
 interface AppNotificationProps {
+  show?: boolean;
   title: string;
   message: string;
   type?: 'success' | 'error' | 'info';
@@ -23,14 +24,15 @@ const NOTIFICATION_THEMES = {
     accent: 'bg-rose-500',
   },
   info: {
-    icon: <Info className="text-pine-500" size={24} />,
+    icon: <Info className="text-[#006c4a]" size={24} />,
     bg: 'bg-white/95',
-    border: 'border-pine-100',
-    accent: 'bg-pine-500',
+    border: 'border-emerald-100',
+    accent: 'bg-[#006c4a]',
   },
 };
 
 export const AppNotification: React.FC<AppNotificationProps> = ({
+  show = true,
   title,
   message,
   type = 'success',
@@ -38,11 +40,14 @@ export const AppNotification: React.FC<AppNotificationProps> = ({
   duration = 5000,
 }) => {
   useEffect(() => {
+    if (!show) return;
     const timer = setTimeout(() => {
       onClose();
     }, duration);
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [show, duration, onClose]);
+
+  if (!show || (!title && !message)) return null;
 
   const theme = NOTIFICATION_THEMES[type];
 
