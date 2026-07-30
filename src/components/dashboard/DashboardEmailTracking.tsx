@@ -120,7 +120,7 @@ export default function DashboardEmailTracking({
                       <span>•</span>
                       <span className="text-emerald-600 font-semibold flex items-center gap-0.5">
                         <Eye size={10} />
-                        Últ. apertura: {formatDateTime(email.last_opened_at)}
+                        Últ. apertura: {formatDateTime(email.last_opened_at)} ({email.opens_count} {email.opens_count === 1 ? 'vez' : 'veces'})
                       </span>
                     </>
                   )}

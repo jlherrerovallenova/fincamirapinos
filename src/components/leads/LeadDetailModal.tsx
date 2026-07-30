@@ -62,6 +62,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
 
   // Tareas de la agenda
   const [tasks, setTasks] = useState<ExtendedAgendaItem[]>([]);
+  const [actionFilter, setActionFilter] = useState<string>('todos');
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingCommentTaskId, setEditingCommentTaskId] = useState<number | null>(null);
   const [inlineCommentValue, setInlineCommentValue] = useState<string>('');
@@ -148,7 +149,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
         .from('agenda')
         .select('*')
         .eq('lead_id', lead.id)
-        .order('due_date', { ascending: true });
+        .order('due_date', { ascending: false });
       setTasks(agendaData as ExtendedAgendaItem[]);
     } catch (err) {
       console.error("Error al cargar tareas:", err);
@@ -816,9 +817,23 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
 
                   {/* COLUMNA DERECHA: AGENDA Y ACCIONES (5 cols en escritorio ~42%) */}
                   <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-3 h-full min-h-[520px]">
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-2 text-[#006c4a]">
-                      <CalendarIcon size={16} /> Agenda de Acciones
-                    </h3>
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 text-[#006c4a]">
+                        <CalendarIcon size={16} /> Agenda de Acciones
+                      </h3>
+                      <select
+                        value={actionFilter}
+                        onChange={(e) => setActionFilter(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold py-1 px-2 text-slate-600 outline-none focus:border-[#006c4a] cursor-pointer"
+                      >
+                        <option value="todos">Todos los tipos</option>
+                        <option value="Llamada">Llamadas</option>
+                        <option value="Email">Emails</option>
+                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Visita">Visitas</option>
+                        <option value="Reunión">Reuniones</option>
+                      </select>
+                    </div>
 
                     {/* Formulario Inline Compacto */}
                     <div className="grid grid-cols-1 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
@@ -956,14 +971,16 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, isInline = tr
 
                     {/* Lista de Tareas */}
                     <div className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-1 max-h-[380px]">
-                      {tasks.length === 0 && (
+                      {tasks.filter(t => actionFilter === 'todos' || t.type === actionFilter).length === 0 && (
                         <div className="text-center py-12 opacity-50">
                           <CalendarIcon size={32} className="mx-auto mb-2 text-slate-300" />
                           <p className="text-xs text-slate-500 italic">No hay tareas o acciones registradas.</p>
                         </div>
                       )}
                       {Object.entries(
-                        tasks.reduce((acc, task) => {
+                        tasks
+                          .filter(t => actionFilter === 'todos' || t.type === actionFilter)
+                          .reduce((acc, task) => {
                           const taskType = task.type || 'Otros';
                           if (!acc[taskType]) acc[taskType] = [];
                           acc[taskType].push(task);

@@ -177,7 +177,7 @@ export default function Dashboard() {
 
       return true;
     })
-    .sort((a, b) => b.opens_count - a.opens_count);
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const todayCount = useMemo(() => agenda.filter(task => {
     if (task.completed) return false;
