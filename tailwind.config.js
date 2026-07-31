@@ -19,8 +19,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'], // Fuente principal limpia
-        display: ['Poppins', 'sans-serif'], // Para títulos
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
       },
       // Eliminamos los bordes exagerados (4xl) del diseño anterior en los nuevos componentes
     },

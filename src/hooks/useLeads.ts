@@ -24,12 +24,12 @@ export function useLeads(params: FetchLeadsParams) {
 
   return useQuery({
     queryKey: [...LEADS_QUERY_KEY, params],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
       let query = supabase
-        .from('leads' as any)
+        .from('leads')
         .select('*', { count: 'exact' });
 
       // Apply sorting
@@ -47,6 +47,9 @@ export function useLeads(params: FetchLeadsParams) {
       if (sourceFilter) {
         query = query.ilike('source', `%${sourceFilter}%`);
       }
+      
+      // Añadir abort signal
+      query = query.abortSignal(signal);
 
       const { data, error, count } = await query.range(from, to);
 

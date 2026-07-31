@@ -111,41 +111,34 @@ const Settings: React.FC = () => {
 
     setIsCloning(true);
     try {
+      const parseEuro = (val: string) => parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+
       const propertyData = {
         modelo: cloneFormData.modelo,
         numero_vivienda: cloneFormData.numero_vivienda.trim(),
-        superficie_parcela: parseFloat(cloneFormData.superficie_parcela) || 0,
-        superficie_util: parseFloat(cloneFormData.superficie_util) || 0,
-        superficie_construida: parseFloat(cloneFormData.superficie_construida) || 0,
+        superficie_parcela: parseEuro(cloneFormData.superficie_parcela),
+        superficie_util: parseEuro(cloneFormData.superficie_util),
+        superficie_construida: parseEuro(cloneFormData.superficie_construida),
         habitaciones: parseInt(cloneFormData.habitaciones) || 0,
         banos: parseInt(cloneFormData.banos) || 0,
-        precio: parseFloat(cloneFormData.precio) || 0,
+        precio: parseEuro(cloneFormData.precio),
         estado_vivienda: cloneFormData.estado_vivienda
       };
-
-      // Validar duplicado
-      const { data: existing, error: checkError } = await supabase
-        .from('inventory')
-        .select('id')
-        .eq('modelo', propertyData.modelo)
-        .eq('numero_vivienda', propertyData.numero_vivienda);
-
-      if (checkError) throw checkError;
-
-      if (existing && existing.length > 0) {
-        await showAlert({
-          title: 'Vivienda Duplicada',
-          message: `Ya existe una vivienda con el número ${propertyData.numero_vivienda} para el modelo ${propertyData.modelo}.`
-        });
-        setIsCloning(false);
-        return;
-      }
 
       const { error: insertError } = await (supabase as any)
         .from('inventory')
         .insert([propertyData]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        if (insertError.code === '23505') { // Postgres unique violation error code
+          await showAlert({
+            title: 'Vivienda Duplicada',
+            message: `Ya existe una vivienda con el número ${propertyData.numero_vivienda} para el modelo ${propertyData.modelo}.`
+          });
+          return;
+        }
+        throw insertError;
+      }
 
       await showAlert({
         title: '¡Vivienda Clonada!',

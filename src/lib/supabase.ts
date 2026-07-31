@@ -7,14 +7,10 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl) {
   console.error('❌ ERROR CRÍTICO: VITE_SUPABASE_URL no está definida en el archivo .env');
-} else {
-  console.log('✅ VITE_SUPABASE_URL detectada');
 }
 
 if (!supabaseAnonKey) {
   console.error('❌ ERROR CRÍTICO: VITE_SUPABASE_ANON_KEY no está definida en el archivo .env');
-} else {
-  console.log('✅ VITE_SUPABASE_ANON_KEY detectada');
 }
 
 export const supabase = createClient<Database>(

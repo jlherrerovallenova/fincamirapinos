@@ -1,5 +1,5 @@
 // src/pages/Sales.tsx
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BadgeDollarSign, 
@@ -9,8 +9,8 @@ import {
   Map as MapPin, 
   CheckCircle, 
   Clock, 
-  FileText, 
-  AlertCircle, 
+  AlertCircle,
+  FileText,
   Loader2 
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -39,7 +39,7 @@ interface SaleItem {
   };
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   reserva: { 
     label: 'Reserva', 
     color: 'bg-amber-50 text-amber-700 border-amber-200', 
@@ -91,6 +91,7 @@ export default function Sales() {
           lead:leads(id, name, phone, email),
           property:inventory(id, numero_vivienda, modelo, precio)
         `)
+        .limit(200)
         .order('created_at', { ascending: false });
 
       console.log('[Ventas] sales data:', salesData, salesError);
@@ -121,7 +122,8 @@ export default function Sales() {
           id, name, phone, email, status, sale_status, property_id, created_at,
           property:inventory(id, numero_vivienda, modelo, precio)
         `)
-        .eq('status', 'closed');
+        .eq('status', 'closed')
+        .limit(200);
 
       console.log('[Ventas] closed leads:', closedLeads, closedError);
 
@@ -132,7 +134,8 @@ export default function Sales() {
           id, name, phone, email, status, sale_status, property_id, created_at,
           property:inventory(id, numero_vivienda, modelo, precio)
         `)
-        .not('property_id', 'is', null);
+        .not('property_id', 'is', null)
+        .limit(200);
 
       console.log('[Ventas] assigned leads (con vivienda):', assignedLeads, assignedError);
 

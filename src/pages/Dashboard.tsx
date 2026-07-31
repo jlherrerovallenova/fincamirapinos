@@ -1,5 +1,5 @@
 // src/pages/Dashboard.tsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -56,6 +56,12 @@ export default function Dashboard() {
   const { showConfirm, showAlert } = useDialog();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   // Estados para datos
   const [stats, setStats] = useState<{ totalLeads: number; topSources: SourceStat[] }>({
@@ -92,36 +98,32 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (session?.user?.id) {
-      let ignore = false;
-      loadDashboardData(ignore);
-      return () => { ignore = true; };
+      loadDashboardData();
     }
   }, [session?.user?.id]);
 
-  const loadDashboardData = async (ignore = false) => {
+  const loadDashboardData = async () => {
     setLoading(true);
     try {
       // 1. CARGA DE LEADS Y ESTADÍSTICAS
       const statsData = await dashboardService.getLeadsStats();
-      if (!ignore) setStats(statsData);
+      if (isMounted.current) setStats(statsData);
 
       const recentLeadsData = await dashboardService.getRecentLeads(6);
-      if (!ignore) setRecentLeads(recentLeadsData);
+      if (isMounted.current) setRecentLeads(recentLeadsData);
 
       // 2. CARGA DE AGENDA
       const agendaData = await dashboardService.getPendingAgenda();
-      if (!ignore) setAgenda(agendaData);
-
-
+      if (isMounted.current) setAgenda(agendaData);
 
       // 4. CARGA DE SEGUIMIENTO DE EMAILS
       const emailData = await dashboardService.getEmailTracking(50);
-      if (!ignore) setEmails(emailData);
+      if (isMounted.current) setEmails(emailData);
 
     } catch (error) {
       console.error("Error general cargando dashboard:", error);
     } finally {
-      if (!ignore) setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -206,14 +208,14 @@ export default function Dashboard() {
 
   // --- ACCIONES DE LA AGENDA ---
   const toggleTask = async (task: AgendaItem) => {
-    const newStatus = !task.completed;
-    if (newStatus) {
-      setAgenda(prev => prev.filter(t => t.id !== task.id));
-    }
     try {
-      await dashboardService.toggleAgendaStatus(task.id, newStatus);
+      await dashboardService.updateAgendaItem(task.id, { completed: !task.completed });
+      setAgenda(prev => prev.map(item => 
+        item.id === task.id ? { ...item, completed: !task.completed } : item
+      ));
     } catch (error) {
       console.error("Error actualizando tarea:", error);
+      await showAlert({ title: 'Error', message: 'No se pudo actualizar la tarea.' });
       loadDashboardData();
     }
   };
@@ -226,9 +228,11 @@ export default function Dashboard() {
       cancelText: 'Cancelar'
     });
     if (!confirmed) return;
-    setAgenda(prev => prev.filter(t => t.id !== id));
     try {
       await dashboardService.deleteAgendaItem(id);
+      if (isMounted.current) {
+        setAgenda(prev => prev.filter(item => item.id !== id));
+      }
     } catch (error) {
       console.error("Error eliminando tarea:", error);
       await showAlert({ title: 'Error', message: 'No se pudo eliminar la tarea' });
@@ -401,10 +405,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* FILA 1: AGENDA DE ACCIONES Y CLIENTES RECIENTES */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-6">
+      {/* FILA 1: AGENDA DE ACCIONES */}
+      <div className="grid grid-cols-1 gap-8 mb-6">
         {/* WIDGET: AGENDA DE ACCIONES */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
+        <div className="col-span-1 bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
           <div className="p-6 border-b border-slate-100 flex flex-col gap-4 bg-white">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
@@ -496,37 +500,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* WIDGET: CLIENTES RECIENTES */}
-        <div className="space-y-6 flex flex-col h-full">
-          <div className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgb(0,0,0,0.05)] border border-slate-200 overflow-hidden flex flex-col h-full min-h-[400px]">
-            <div className="p-6 border-b border-slate-150 flex justify-between items-center bg-white shrink-0">
-              <h3 className="font-bold text-slate-955 text-sm tracking-tight">Clientes Recientes</h3>
-              <button type="button" onClick={() => navigate('/leads')} className="text-[10px] font-bold text-slate-500 hover:text-slate-900 uppercase tracking-wider">
-                VER TODOS
-              </button>
-            </div>
-            <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[500px]">
-              {recentLeads.map((lead) => (
-                <div
-                  key={lead.id}
-                  onClick={() => navigate(`/leads?search=${encodeURIComponent(lead.name)}`)}
-                  className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-xs border border-slate-200 group-hover:bg-emerald-50 group-hover:text-[#006c4a] group-hover:border-emerald-200 transition-colors">
-                      {lead.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-xs leading-none group-hover:text-[#006c4a] transition-colors">{lead.name}</h4>
-                      <span className="text-[10px] text-slate-400 font-medium mt-1 block">{lead.source || 'Sin origen'}</span>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="text-slate-400 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* FILA 2: RESUMEN DE CAPTACIÓN Y ACCESOS RÁPIDOS */}

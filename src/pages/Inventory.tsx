@@ -13,13 +13,15 @@ import {
   Filter,
   FileText,
   Trees,
-  Leaf
+  Leaf,
+  CreditCard
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
 import CreatePropertyModal from '../components/inventory/CreatePropertyModal';
 import { useDialog } from '../context/DialogContext';
+import { generatePaymentPlanPDF } from '../utils/documentGenerator';
 
 interface Property {
   id: number;
@@ -59,6 +61,7 @@ export default function Inventory() {
       const { data, error } = await supabase
         .from('inventory')
         .select('*')
+        .limit(200)
         .order('numero_vivienda', { ascending: true });
 
       if (error) throw error;
@@ -442,6 +445,22 @@ export default function Inventory() {
                         </td>
                         <td className="py-4 px-6 text-center">
                           <div className="flex items-center justify-center gap-1 opacity-90 group-hover:opacity-100">
+                            <button
+                              onClick={async () => {
+                                if (property.precio) {
+                                  await generatePaymentPlanPDF({
+                                    numero_vivienda: property.numero_vivienda,
+                                    modelo: property.modelo,
+                                    precio: property.precio,
+                                  });
+                                }
+                              }}
+                              disabled={!property.precio}
+                              className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Generar Plan de Pagos"
+                            >
+                              <CreditCard size={17} />
+                            </button>
                             <button
                               onClick={() => {
                                 setEditingProperty(property);

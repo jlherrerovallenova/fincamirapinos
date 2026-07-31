@@ -26,7 +26,7 @@ export default function Pipeline() {
   // React Query para obtener todos los leads activos
   const { data, isLoading: loading } = useLeads({
     page: 1,
-    pageSize: 1000, // En el pipeline queremos ver todos los activos a la vez
+    pageSize: 200, // Limitado a 200 para evitar bloqueos del navegador
     statusFilter: undefined, // No filtramos por status aquí porque los separamos por columnas
     sortField: 'created_at',
     sortDirection: 'desc'
@@ -39,17 +39,10 @@ export default function Pipeline() {
     setDraggedLeadId(leadId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', leadId);
-
-    setTimeout(() => {
-      const element = document.getElementById(`lead-card-${leadId}`);
-      if (element) element.classList.add('opacity-50');
-    }, 0);
   };
 
   const handleDragEnd = (_e: React.DragEvent, leadId: string) => {
     setDraggedLeadId(null);
-    const element = document.getElementById(`lead-card-${leadId}`);
-    if (element) element.classList.remove('opacity-50');
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -147,7 +140,7 @@ export default function Pipeline() {
                       onDragEnd={(e) => handleDragEnd(e, lead.id)}
                       onClick={() => setSelectedLead(lead)}
                       onDoubleClick={() => navigate(`/leads?search=${encodeURIComponent(lead.name)}`)}
-                      className="bg-white p-2 rounded-lg shadow-sm border border-slate-100 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-emerald-400 transition-all group relative overflow-hidden"
+                      className={`bg-white p-2 rounded-lg shadow-sm border border-slate-100 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-emerald-400 transition-all group relative overflow-hidden ${draggedLeadId === lead.id ? 'opacity-50 ring-2 ring-emerald-500' : ''}`}
                     >
                       {/* Name */}
                       <h4 className="font-bold text-slate-900 text-[10px] sm:text-[11px] leading-tight break-words group-hover:text-emerald-700 transition-colors mb-2">

@@ -23,9 +23,12 @@ import {
   Clock,
   BarChart3,
   TrendingUp,
-  BadgeDollarSign
+  BadgeDollarSign,
+  FileText
 } from 'lucide-react';
 import { useAgendaAlerts } from '../hooks/useAgendaAlerts';
+import { DocumentGeneratorModal } from '../components/documents/DocumentGeneratorModal';
+
 
 
 export default function MainLayout() {
@@ -43,6 +46,7 @@ export default function MainLayout() {
     type: 'info' as 'success' | 'error' | 'info'
   });
   const [showBellPopover, setShowBellPopover] = useState(false);
+  const [isDocGeneratorOpen, setIsDocGeneratorOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const { todayCount, overdueCount, total: alertTotal } = useAgendaAlerts();
 
@@ -209,7 +213,17 @@ export default function MainLayout() {
                 className="pl-9 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all w-48 lg:w-64 placeholder:text-slate-400 font-medium"
               />
             </form>
-            <div className="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
+            {/* Botón Generar Contrato / Documento */}
+            <button
+              onClick={() => setIsDocGeneratorOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm active:scale-95 shrink-0"
+              title="Generar contrato o documento"
+            >
+              <FileText size={15} />
+              <span className="hidden sm:inline">Generar Contrato</span>
+            </button>
+
+            <div className="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
 
             {/* Campana con badge y popover */}
             <div className="relative" ref={bellRef}>
@@ -282,6 +296,11 @@ export default function MainLayout() {
             </div>
           </div>
         </header>
+
+        <DocumentGeneratorModal
+          isOpen={isDocGeneratorOpen}
+          onClose={() => setIsDocGeneratorOpen(false)}
+        />
 
         <div className="flex-1 overflow-auto bg-slate-100/50 relative">
           <div className="w-full p-4 md:p-8 pb-10">
