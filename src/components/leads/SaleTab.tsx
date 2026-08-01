@@ -1,6 +1,6 @@
 // src/components/leads/SaleTab.tsx
 // Pestaña de gestión del proceso de compra-venta de una vivienda
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Home, User, Users, FileText, Receipt, PenLine,
   CheckCircle2, Circle, ChevronDown, ChevronUp,
@@ -81,32 +81,18 @@ export default function SaleTab({ lead, onLeadUpdate }: Props) {
   });
   const [hasJointBuyer, setHasJointBuyer] = useState(!!lead.joint_buyer_name);
 
-  useEffect(() => {
-    fetchProperties();
-    fetchSale();
-  }, [lead.id]);
-
-  async function fetchProperties() {
+  const fetchProperties = useCallback(async () => {
+    const { sortInventoryProperties } = await import('../../hooks/useInventory');
     const { data } = await supabase
       .from('inventory')
       .select('*');
       
     if (data) {
-      // Ordenar numéricamente por numero_vivienda (1, 2, 3... en lugar de 1, 10, 11...)
-      const sorted = ((data as InventoryRow[]) || []).sort((a, b) => {
-        const valA = a.numero_vivienda || '';
-        const valB = b.numero_vivienda || '';
-        const numA = parseInt(valA) || 0;
-        const numB = parseInt(valB) || 0;
-        if (numA !== numB) return numA - numB;
-        // Si los números son iguales (o ambos 0), comparamos como string por si acaso (natural sort)
-        return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
-      });
-      setProperties(sorted);
+      setProperties(sortInventoryProperties((data as InventoryRow[]) || []));
     }
-  }
+  }, []);
 
-  async function fetchSale() {
+  const fetchSale = useCallback(async () => {
     const { data } = await (supabase as any)
       .from('sales')
       .select('*')
@@ -119,7 +105,12 @@ export default function SaleTab({ lead, onLeadUpdate }: Props) {
       fetchInstallments(data.id);
       fetchDocuments(data.id);
     }
-  }
+  }, [lead.id]);
+
+  useEffect(() => {
+    fetchProperties();
+    fetchSale();
+  }, [fetchProperties, fetchSale]);
 
   async function fetchDocuments(saleId: string) {
     const { data } = await (supabase as any)

@@ -38,11 +38,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const lastProfileFetchRef = useRef<number>(0);
   const isFetchingRef = useRef<boolean>(false);
 
-  const fetchProfile = async (userId: string, retries = 2) => {
-    // Si ya estamos buscando, o buscamos hace menos de 2 segundos, ignoramos para no spammar.
+  const fetchProfile = useCallback(async (userId: string, retries = 2, isRetry = false) => {
+    // Si ya estamos buscando, o buscamos hace menos de 2 segundos, ignoramos para no spammar salvo que sea un reintento explicito.
     const now = Date.now();
     console.log(`[AuthDebug] 👤 Intento de fetchProfile. (userId=${userId}, retries=${retries})`);
-    if (isFetchingRef.current || (now - lastProfileFetchRef.current < 2000)) {
+    if (!isRetry && (isFetchingRef.current || (now - lastProfileFetchRef.current < 2000))) {
       console.log('⏳ fetchProfile omitido (debounce o fetch en progreso).');
       return;
     }
@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error.message?.includes('AbortError') && retries > 0) {
           console.warn(`⏳ AbortError detectado. Reintentando en 1s... (Quedan ${retries})`);
           isFetchingRef.current = false;
-          setTimeout(() => fetchProfile(userId, retries - 1), 1000);
+          setTimeout(() => fetchProfile(userId, retries - 1, true), 1000);
           return;
         }
 
@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error.message?.includes('AbortError') && retries > 0) {
         console.warn(`⏳ Catch AbortError detectado. Reintentando en 1s... (Quedan ${retries})`);
         isFetchingRef.current = false;
-        setTimeout(() => fetchProfile(userId, retries - 1), 1000);
+        setTimeout(() => fetchProfile(userId, retries - 1, true), 1000);
         return;
       }
 
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       isFetchingRef.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -174,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setAuthError(null);
@@ -188,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = useCallback(async () => {
     if (user?.id) await fetchProfile(user.id);
-  }, [user?.id]);
+  }, [user?.id, fetchProfile]);
 
   const value = useMemo(
     () => ({ session, user, profile, loading, signIn, signOut, refreshProfile }),

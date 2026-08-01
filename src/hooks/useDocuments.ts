@@ -21,38 +21,31 @@ export function useDocuments() {
     return useQuery({
         queryKey: ['system_documents'],
         queryFn: async () => {
-            let allDocs: SystemDocument[] = [];
-
-            for (const category of DOCUMENT_CATEGORIES) {
+            // Consultas en paralelo para todas las categorías y la raíz
+            const categoryPromises = DOCUMENT_CATEGORIES.map(async (category) => {
                 const { data, error } = await supabase.storage.from('documents').list(category);
                 if (error) {
                     console.error(`Error listando la carpeta ${category}:`, error);
-                    continue;
+                    return [];
                 }
+                if (!data) return [];
+                const validFiles = data.filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== '.emptyFolder' && f.id);
+                return validFiles.map(doc => {
+                    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(`${category}/${doc.name}`);
+                    return {
+                        ...doc,
+                        category,
+                        fullPath: `${category}/${doc.name}`,
+                        url: publicUrl
+                    };
+                });
+            });
 
-                if (data) {
-                    const validFiles = data.filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== '.emptyFolder' && f.id);
-                    const docsWithMeta = validFiles.map(doc => {
-                        const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(`${category}/${doc.name}`);
-                        return {
-                            ...doc,
-                            category,
-                            fullPath: `${category}/${doc.name}`,
-                            url: publicUrl
-                        };
-                    });
-
-                    // @ts-ignore
-                    allDocs = [...allDocs, ...docsWithMeta];
-                }
-            }
-
-            // Archivos huérfanos en la raíz ("Sin Categorizar")
-            const { data: rootData, error: rootError } = await supabase.storage.from('documents').list();
-            if (!rootError && rootData) {
+            const rootPromise = (async () => {
+                const { data: rootData, error: rootError } = await supabase.storage.from('documents').list();
+                if (rootError || !rootData) return [];
                 const rootFiles = rootData.filter(f => f.id && f.name !== '.emptyFolderPlaceholder' && f.name !== '.emptyFolder' && !DOCUMENT_CATEGORIES.includes(f.name));
-
-                const rootDocsWithMeta = rootFiles.map(doc => {
+                return rootFiles.map(doc => {
                     const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(doc.name);
                     return {
                         ...doc,
@@ -61,10 +54,17 @@ export function useDocuments() {
                         url: publicUrl
                     };
                 });
+            })();
 
-                // @ts-ignore
-                allDocs = [...allDocs, ...rootDocsWithMeta];
-            }
+            const [categoryResults, rootDocs] = await Promise.all([
+                Promise.all(categoryPromises),
+                rootPromise
+            ]);
+
+            const allDocs: SystemDocument[] = [
+                ...categoryResults.flat(),
+                ...rootDocs
+            ] as unknown as SystemDocument[];
 
             return allDocs;
         },

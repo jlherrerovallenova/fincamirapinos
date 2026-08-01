@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Importaciones perezosas
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -18,6 +19,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Newsletters = lazy(() => import('./pages/Newsletters'));
 const NewsletterEditor = lazy(() => import('./pages/NewsletterEditor'));
 const Stats = lazy(() => import('./pages/Stats'));
+const PublicSignaturePage = lazy(() => import('./pages/PublicSignaturePage'));
 
 const PageLoader = () => (
   <div className="w-full h-[60vh] flex flex-col items-center justify-center">
@@ -35,26 +37,29 @@ const ProtectedRoute = () => {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-          <Route path="/leads" element={<Suspense fallback={<PageLoader />}><Leads /></Suspense>} />
-          <Route path="/leads/:id" element={<Suspense fallback={<PageLoader />}><LeadDetail /></Suspense>} />
-          <Route path="/pipeline" element={<Suspense fallback={<PageLoader />}><Pipeline /></Suspense>} />
-          <Route path="/sales" element={<Suspense fallback={<PageLoader />}><Sales /></Suspense>} />
-          <Route path="/inventory" element={<Suspense fallback={<PageLoader />}><Inventory /></Suspense>} />
-          <Route path="/agenda" element={<Suspense fallback={<PageLoader />}><Agenda /></Suspense>} />
-          <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
-          <Route path="/newsletters" element={<Suspense fallback={<PageLoader />}><Newsletters /></Suspense>} />
-          <Route path="/newsletters/:id" element={<Suspense fallback={<PageLoader />}><NewsletterEditor /></Suspense>} />
-          <Route path="/stats" element={<Suspense fallback={<PageLoader />}><Stats /></Suspense>} />
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/firmar/:token" element={<Suspense fallback={<PageLoader />}><PublicSignaturePage /></Suspense>} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+            <Route path="/leads" element={<Suspense fallback={<PageLoader />}><Leads /></Suspense>} />
+            <Route path="/leads/:id" element={<Suspense fallback={<PageLoader />}><LeadDetail /></Suspense>} />
+            <Route path="/pipeline" element={<Suspense fallback={<PageLoader />}><Pipeline /></Suspense>} />
+            <Route path="/sales" element={<Suspense fallback={<PageLoader />}><Sales /></Suspense>} />
+            <Route path="/inventory" element={<Suspense fallback={<PageLoader />}><Inventory /></Suspense>} />
+            <Route path="/agenda" element={<Suspense fallback={<PageLoader />}><Agenda /></Suspense>} />
+            <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
+            <Route path="/newsletters" element={<Suspense fallback={<PageLoader />}><Newsletters /></Suspense>} />
+            <Route path="/newsletters/:id" element={<Suspense fallback={<PageLoader />}><NewsletterEditor /></Suspense>} />
+            <Route path="/stats" element={<Suspense fallback={<PageLoader />}><Stats /></Suspense>} />
+          </Route>
         </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ErrorBoundary>
   );
 }
 
-export default App;
+export default App;

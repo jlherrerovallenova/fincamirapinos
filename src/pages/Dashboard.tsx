@@ -1,11 +1,10 @@
 // src/pages/Dashboard.tsx
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Calendar,
   Search,
-  ChevronRight,
   LayoutDashboard,
   ArrowUpRight,
   Globe,
@@ -30,13 +29,6 @@ interface SourceStat {
   name: string;
   count: number;
   percentage: number;
-}
-
-interface RecentLead {
-  id: string;
-  name: string;
-  source: string | null;
-  created_at: string;
 }
 
 interface EmailTrackingItem {
@@ -68,7 +60,6 @@ export default function Dashboard() {
     totalLeads: 0,
     topSources: []
   });
-  const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [agenda, setAgenda] = useState<AgendaItem[]>([]);
 
   // Estado para la búsqueda del cliente y el tab activo
@@ -96,27 +87,18 @@ export default function Dashboard() {
     };
   }, []);
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      loadDashboardData();
-    }
-  }, [session?.user?.id]);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       // 1. CARGA DE LEADS Y ESTADÍSTICAS
       const statsData = await dashboardService.getLeadsStats();
       if (isMounted.current) setStats(statsData);
 
-      const recentLeadsData = await dashboardService.getRecentLeads(6);
-      if (isMounted.current) setRecentLeads(recentLeadsData);
-
       // 2. CARGA DE AGENDA
       const agendaData = await dashboardService.getPendingAgenda();
       if (isMounted.current) setAgenda(agendaData);
 
-      // 4. CARGA DE SEGUIMIENTO DE EMAILS
+      // 3. CARGA DE SEGUIMIENTO DE EMAILS
       const emailData = await dashboardService.getEmailTracking(50);
       if (isMounted.current) setEmails(emailData);
 
@@ -125,61 +107,69 @@ export default function Dashboard() {
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  };
+  }, []);
 
-  // --- LÓGICA DE FILTRADO Y PESTAÑAS ---
-  const filteredAgenda = agenda
-    .filter(task => {
-      // 1. Filtro por búsqueda de cliente o título
-      const matchesSearch =
-        task.leads?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.title.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadDashboardData();
+    }
+  }, [session?.user?.id, loadDashboardData]);
 
-      if (!matchesSearch) return false;
+  // --- LÓGICA DE FILTRADO Y PESTAÑAS MEMOIZADA ---
+  const filteredAgenda = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return agenda
+      .filter(task => {
+        const matchesSearch =
+          task.leads?.name?.toLowerCase().includes(query) ||
+          task.title.toLowerCase().includes(query);
 
-      // 2. Filtro por Tab (Hoy vs Caducadas vs Semana)
-      const taskDate = new Date(task.due_date).getTime();
+        if (!matchesSearch) return false;
 
-      if (activeTab === 'hoy') {
-        return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endTodayTime;
-      }
-      if (activeTab === 'caducadas') {
-        return taskDate < dateBoundaries.startTodayTime;
-      }
-      if (activeTab === 'semana') {
-        return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endWeekTime;
-      }
+        const taskDate = new Date(task.due_date).getTime();
 
-      return true;
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.due_date).getTime();
-      const dateB = new Date(b.due_date).getTime();
+        if (activeTab === 'hoy') {
+          return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endTodayTime;
+        }
+        if (activeTab === 'caducadas') {
+          return taskDate < dateBoundaries.startTodayTime;
+        }
+        if (activeTab === 'semana') {
+          return taskDate >= dateBoundaries.startTodayTime && taskDate <= dateBoundaries.endWeekTime;
+        }
 
-      if (activeTab === 'caducadas') {
-        // De más nueva a más antigua
-        return dateB - dateA;
-      }
-      // De más antigua a más nueva
-      return dateA - dateB;
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.due_date).getTime();
+        const dateB = new Date(b.due_date).getTime();
 
-  const filteredEmails = emails
-    .filter(email => {
-      const matchesSearch =
-        email.leads?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.subject?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      if (!matchesSearch) return false;
+        if (activeTab === 'caducadas') {
+          return dateB - dateA;
+        }
+        return dateA - dateB;
+      });
+  }, [agenda, searchQuery, activeTab, dateBoundaries]);
 
-      if (emailFilter === 'unopened') {
-        const isOpened = email.status === 'opened' || email.opens_count > 0;
-        if (isOpened) return false;
-      }
+  const filteredEmails = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return emails
+      .filter(email => {
+        const matchesSearch =
+          email.leads?.name?.toLowerCase().includes(query) ||
+          email.subject?.toLowerCase().includes(query);
+        
+        if (!matchesSearch) return false;
 
-      return true;
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        if (emailFilter === 'unopened') {
+          const isOpened = email.status === 'opened' || email.opens_count > 0;
+          if (isOpened) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [emails, searchQuery, emailFilter]);
 
   const todayCount = useMemo(() => agenda.filter(task => {
     if (task.completed) return false;
@@ -209,7 +199,7 @@ export default function Dashboard() {
   // --- ACCIONES DE LA AGENDA ---
   const toggleTask = async (task: AgendaItem) => {
     try {
-      await dashboardService.updateAgendaItem(task.id, { completed: !task.completed });
+      await dashboardService.toggleAgendaStatus(task.id, !task.completed);
       setAgenda(prev => prev.map(item => 
         item.id === task.id ? { ...item, completed: !task.completed } : item
       ));

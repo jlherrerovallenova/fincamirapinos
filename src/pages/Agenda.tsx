@@ -1,7 +1,6 @@
 // src/pages/Agenda.tsx
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useState, useMemo } from 'react';
+import { useAgenda, useUpdateAgendaItem, useDeleteAgendaItem } from '../hooks/useAgenda';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -26,64 +25,40 @@ type AgendaItem = Database['public']['Tables']['agenda']['Row'] & {
 const ITEMS_PER_PAGE = 8;
 
 export default function Agenda() {
-  const { session } = useAuth();
-  const [items, setItems] = useState<AgendaItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawItems = [], isLoading: loading } = useAgenda();
+  const updateMutation = useUpdateAgendaItem();
+  const deleteMutation = useDeleteAgendaItem();
 
   const [page, setPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('pending');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { showConfirm, showAlert } = useDialog();
 
-  useEffect(() => {
-    let ignore = false;
-    fetchAgenda(ignore);
-    return () => { ignore = true; };
-  }, [page, filterStatus]);
+  // Filtrado y mapeo seguro de la lista
+  const filteredItems = useMemo(() => {
+    const formatted = rawItems.map(item => ({
+      ...item,
+      leads: Array.isArray(item.leads) ? item.leads[0] : item.leads
+    })) as AgendaItem[];
 
-  const fetchAgenda = async (ignore = false) => {
-    if (!session) return;
-    setLoading(true);
-    try {
-      const from = (page - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+    if (filterStatus === 'pending') return formatted.filter(i => !i.completed);
+    if (filterStatus === 'completed') return formatted.filter(i => i.completed);
+    return formatted;
+  }, [rawItems, filterStatus]);
 
-      // Consulta a 'agenda' trayendo el nombre del cliente relacionado
-      let query = supabase
-        .from('agenda')
-        .select('*, leads(name)', { count: 'exact' })
-        .order('due_date', { ascending: true });
+  const totalItems = filteredItems.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
-      if (filterStatus === 'pending') query = query.eq('completed', false);
-      if (filterStatus === 'completed') query = query.eq('completed', true);
+  const paginatedItems = useMemo(() => {
+    const from = (page - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(from, from + ITEMS_PER_PAGE);
+  }, [filteredItems, page]);
 
-      const { data, count, error } = await query.range(from, to);
-
-      if (error) throw error;
-
-      // Mapeamos los datos para asegurar compatibilidad de tipos si leads es array o objeto
-      const formattedData = (data || []).map(item => ({
-        ...(item as any),
-        leads: Array.isArray((item as any).leads) ? (item as any).leads[0] : (item as any).leads
-      })) as AgendaItem[];
-
-      if (!ignore) {
-        setItems(formattedData);
-        if (count !== null) setTotalItems(count);
-      }
-
-    } catch (error) {
-      console.error('Error fetching agenda:', error);
-    } finally {
-      if (!ignore) setLoading(false);
-    }
-  };
-
-  const toggleStatus = async (item: AgendaItem) => {
-    const newStatus = !item.completed;
-    await (supabase as any).from('agenda').update({ completed: newStatus }).eq('id', item.id);
-    fetchAgenda();
+  const toggleStatus = (item: AgendaItem) => {
+    updateMutation.mutate({
+      id: item.id,
+      updates: { completed: !item.completed }
+    });
   };
 
   const deleteItem = async (id: number) => {
@@ -95,18 +70,14 @@ export default function Agenda() {
     });
     if (!confirmed) return;
     try {
-      const { error } = await supabase.from('agenda').delete().eq('id', id);
-      if (error) throw error;
-      fetchAgenda();
-    } catch (error) {
+      await deleteMutation.mutateAsync(id);
+    } catch {
       await showAlert({ title: 'Error', message: 'No se pudo eliminar la tarea' });
     }
   };
 
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
   const getTypeIcon = (type: string) => {
-    const t = type.toLowerCase();
+    const t = (type || '').toLowerCase();
     if (t.includes('llamada')) return <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Clock size={18} /></div>;
     if (t.includes('visita')) return <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><CalendarIcon size={18} /></div>;
     return <div className="p-2 bg-slate-50 text-slate-500 rounded-lg"><AlertCircle size={18} /></div>;
@@ -168,12 +139,12 @@ export default function Agenda() {
             <div className="flex items-center justify-center h-40 text-slate-400 gap-2">
               <Loader2 className="animate-spin" /> Cargando...
             </div>
-          ) : items.length === 0 ? (
+          ) : paginatedItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
               <p className="font-medium">No hay tareas en esta vista.</p>
             </div>
           ) : (
-            items.map((item) => {
+            paginatedItems.map((item) => {
               const dateObj = new Date(item.due_date);
               return (
                 <div key={item.id} className={`p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors group ${item.completed ? 'opacity-60 bg-slate-50/50' : ''}`}>
@@ -218,7 +189,7 @@ export default function Agenda() {
                     </button>
                   </div>
                 </div>
-              )
+              );
             })
           )}
         </div>
@@ -244,7 +215,6 @@ export default function Agenda() {
       <CreateTaskModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => fetchAgenda()}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 // src/pages/Inventory.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -16,12 +16,11 @@ import {
   Leaf,
   CreditCard
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
 import CreatePropertyModal from '../components/inventory/CreatePropertyModal';
 import { useDialog } from '../context/DialogContext';
 import { generatePaymentPlanPDF } from '../utils/documentGenerator';
+import { sortInventoryProperties } from '../hooks/useInventory';
 
 interface Property {
   id: number;
@@ -44,69 +43,73 @@ export default function Inventory() {
   const [stateFilter, setStateFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const { showAlert } = useDialog();
-
-  // Estados para el nuevo modal de confirmación de borrado
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const { showAlert } = useDialog();
 
-  useEffect(() => {
-    fetchProperties();
-  }, []);
-
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('inventory')
-        .select('*')
-        .limit(200)
-        .order('numero_vivienda', { ascending: true });
+        .select('*');
 
       if (error) throw error;
-      setProperties(data || []);
-    } catch (error) {
+      setProperties(sortInventoryProperties(data || []));
+    } catch (error: any) {
       console.error('Error fetching inventory:', error);
+      await showAlert({ title: 'Error', message: 'No se pudieron cargar las viviendas del inventario.' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [showAlert]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
 
   const confirmDelete = async () => {
-    if (!propertyToDelete || isDeleting) return;
-
+    if (!propertyToDelete) return;
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
       const { error } = await supabase
         .from('inventory')
         .delete()
         .eq('id', propertyToDelete.id);
 
       if (error) throw error;
-
+      
       setProperties(prev => prev.filter(p => p.id !== propertyToDelete.id));
       setPropertyToDelete(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting property:', error);
-      await showAlert({ title: 'Error', message: 'Error al intentar eliminar el registro.' });
+      await showAlert({ title: 'Error', message: 'No se pudo eliminar la propiedad. Puede tener registros vinculados.' });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const filteredProperties = properties.filter(p => {
-    const matchesSearch = p.modelo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.numero_vivienda.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesState = stateFilter === '' || p.estado_vivienda === stateFilter;
-    return matchesSearch && matchesState;
-  });
+  const filteredProperties = useMemo(() => {
+    const list = properties.filter(p => {
+      const matchesSearch = p.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            p.numero_vivienda.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesState = stateFilter === '' || p.estado_vivienda === stateFilter;
+      return matchesSearch && matchesState;
+    });
+    return sortInventoryProperties(list);
+  }, [properties, searchTerm, stateFilter]);
 
   const handleExportPDF = async () => {
     if (filteredProperties.length === 0) return;
 
     try {
       setIsExporting(true);
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable')
+      ]);
+
       const doc = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',

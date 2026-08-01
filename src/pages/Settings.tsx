@@ -337,7 +337,7 @@ const Settings: React.FC = () => {
       const { data, error } = await supabase.storage.from('documents').createSignedUrl(fullPath, 60);
       if (error) throw error;
       setPreviewUrl(data.signedUrl);
-    } catch (ignore) {
+    } catch {
       await showAlert({ title: 'Error', message: 'No se pudo generar la vista temporizada del archivo.' });
     }
   };

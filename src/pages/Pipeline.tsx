@@ -41,7 +41,7 @@ export default function Pipeline() {
     e.dataTransfer.setData('text/plain', leadId);
   };
 
-  const handleDragEnd = (_e: React.DragEvent, leadId: string) => {
+  const handleDragEnd = () => {
     setDraggedLeadId(null);
   };
 
@@ -137,7 +137,7 @@ export default function Pipeline() {
                       id={`lead-card-${lead.id}`}
                       draggable
                       onDragStart={(e) => handleDragStart(e, lead.id)}
-                      onDragEnd={(e) => handleDragEnd(e, lead.id)}
+                      onDragEnd={handleDragEnd}
                       onClick={() => setSelectedLead(lead)}
                       onDoubleClick={() => navigate(`/leads?search=${encodeURIComponent(lead.name)}`)}
                       className={`bg-white p-2 rounded-lg shadow-sm border border-slate-100 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-emerald-400 transition-all group relative overflow-hidden ${draggedLeadId === lead.id ? 'opacity-50 ring-2 ring-emerald-500' : ''}`}

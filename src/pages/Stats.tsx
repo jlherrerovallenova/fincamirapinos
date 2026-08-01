@@ -1,5 +1,5 @@
 // src/pages/Stats.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   XAxis, 
   YAxis, 
@@ -43,14 +43,7 @@ export default function Stats() {
     growth: 0
   });
   const [rawLeads, setRawLeads] = useState<any[]>([]);
-
-  useEffect(() => {
-    let ignore = false;
-    fetchStats(ignore);
-    return () => { ignore = true; };
-  }, [timeRange]);
-
-  const fetchStats = async (ignore = false) => {
+  const fetchStats = useCallback(async (ignore = false) => {
     setLoading(true);
     try {
       const { data: leads, error } = await supabase
@@ -68,7 +61,13 @@ export default function Stats() {
     } finally {
       if (!ignore) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    fetchStats(ignore);
+    return () => { ignore = true; };
+  }, [timeRange, fetchStats]);
 
   const processLeadsData = (leads: any[]) => {
     // 1. Resumen general

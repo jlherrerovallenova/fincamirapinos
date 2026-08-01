@@ -1,5 +1,5 @@
 // src/pages/LeadDetail.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2, ArrowLeft } from 'lucide-react';
@@ -16,13 +16,7 @@ export default function LeadDetail() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchLeadData();
-    }
-  }, [id]);
-
-  const fetchLeadData = async () => {
+  const fetchLeadData = useCallback(async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -40,7 +34,13 @@ export default function LeadDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchLeadData();
+    }
+  }, [id, fetchLeadData]);
 
   if (loading) {
     return (

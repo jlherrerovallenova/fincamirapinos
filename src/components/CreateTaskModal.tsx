@@ -11,7 +11,7 @@ type Lead = Database['public']['Tables']['leads']['Row'];
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export default function CreateTaskModal({ isOpen, onClose, onSuccess }: Props) {
@@ -32,6 +32,24 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }: Props) {
 
   // Buscar clientes cuando el usuario escribe
   useEffect(() => {
+    async function searchLeads() {
+      setIsSearching(true);
+      try {
+        const { data, error } = await supabase
+          .from('leads')
+          .select('*')
+          .ilike('name', `%${searchTerm}%`)
+          .limit(5);
+
+        if (error) throw error;
+        setLeads(data || []);
+      } catch (error) {
+        console.error('Error buscando clientes:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }
+
     const delayDebounceFn = setTimeout(() => {
       if (searchTerm.length > 2) {
         searchLeads();
@@ -42,24 +60,6 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }: Props) {
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
-
-  async function searchLeads() {
-    setIsSearching(true);
-    try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .ilike('name', `%${searchTerm}%`)
-        .limit(5);
-
-      if (error) throw error;
-      setLeads(data || []);
-    } catch (error) {
-      console.error('Error buscando clientes:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +101,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }: Props) {
       // 2. Abrir en nueva pestaña
       window.open(googleCalUrl.toString(), '_blank');
 
-      onSuccess();
+      onSuccess?.();
       onClose();
       // Reset form
       setFormData({

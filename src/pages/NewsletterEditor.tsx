@@ -24,47 +24,48 @@ export default function NewsletterEditor() {
     const editorTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
-        if (id) {
-            let ignore = false;
-            loadNewsletter(id, ignore);
-            return () => { 
-                ignore = true; 
-                if (editorTimerRef.current) clearInterval(editorTimerRef.current);
-            };
-        }
-    }, [id]);
+        if (!id) return;
+        let ignore = false;
 
-    const loadNewsletter = async (newsletterId: string, ignore = false) => {
-        setLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('newsletters')
-                .select('*')
-                .eq('id', newsletterId)
-                .single();
+        const loadNewsletter = async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('newsletters')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
 
-            if (error) throw error;
-            if (data && !ignore) {
-                setSubject((data as any).subject || '');
-                setStatus((data as any).status);
+                if (error) throw error;
+                if (data && !ignore) {
+                    setSubject((data as any).subject || '');
+                    setStatus((data as any).status);
 
-                // Wait for editor to be ready before loading design
-                editorTimerRef.current = setInterval(() => {
-                    if (emailEditorRef.current?.editor) {
-                        if (editorTimerRef.current) clearInterval(editorTimerRef.current);
-                        if ((data as any).design) {
-                            emailEditorRef.current.editor.loadDesign((data as any).design);
+                    // Wait for editor to be ready before loading design
+                    editorTimerRef.current = setInterval(() => {
+                        if (emailEditorRef.current?.editor) {
+                            if (editorTimerRef.current) clearInterval(editorTimerRef.current);
+                            if ((data as any).design) {
+                                emailEditorRef.current.editor.loadDesign((data as any).design);
+                            }
                         }
-                    }
-                }, 500);
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('Error loading newsletter:', error);
+                if (!ignore) showMsg('error', 'Error', 'No pudimos cargar la plantilla. Revisa tu conexión.');
+            } finally {
+                if (!ignore) setLoading(false);
             }
-        } catch (error) {
-            console.error('Error loading newsletter:', error);
-            if (!ignore) showMsg('error', 'Error', 'No pudimos cargar la plantilla. Revisa tu conexión.');
-        } finally {
-            if (!ignore) setLoading(false);
-        }
-    };
+        };
+
+        loadNewsletter();
+
+        return () => {
+            ignore = true;
+            if (editorTimerRef.current) clearInterval(editorTimerRef.current);
+        };
+    }, [id]);
 
     const saveDesign = async (isSending: boolean = false) => {
         if (!id || !emailEditorRef.current?.editor) return null;

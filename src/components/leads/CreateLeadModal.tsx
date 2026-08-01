@@ -47,7 +47,7 @@ export default function CreateLeadModal({ isOpen, onClose, onSuccess }: Props) {
         if (!error && data && data.length > 0) return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       return false;
     }
   };

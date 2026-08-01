@@ -1,5 +1,5 @@
 // src/pages/Sales.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BadgeDollarSign, 
@@ -83,18 +83,40 @@ export default function Sales() {
   const fetchSales = async () => {
     setIsLoading(true);
     try {
-      // 1. Obtener operaciones en la tabla 'sales' con join a inventory
-      const { data: salesData, error: salesError } = await supabase
-        .from('sales')
-        .select(`
-          *,
-          lead:leads(id, name, phone, email),
-          property:inventory(id, numero_vivienda, modelo, precio)
-        `)
-        .limit(200)
-        .order('created_at', { ascending: false });
+      // Peticiones en paralelo a la base de datos
+      const [salesRes, closedRes, assignedRes] = await Promise.all([
+        supabase
+          .from('sales')
+          .select(`
+            *,
+            lead:leads(id, name, phone, email),
+            property:inventory(id, numero_vivienda, modelo, precio)
+          `)
+          .limit(200)
+          .order('created_at', { ascending: false }),
 
-      console.log('[Ventas] sales data:', salesData, salesError);
+        supabase
+          .from('leads')
+          .select(`
+            id, name, phone, email, status, sale_status, property_id, created_at,
+            property:inventory(id, numero_vivienda, modelo, precio)
+          `)
+          .eq('status', 'closed')
+          .limit(200),
+
+        supabase
+          .from('leads')
+          .select(`
+            id, name, phone, email, status, sale_status, property_id, created_at,
+            property:inventory(id, numero_vivienda, modelo, precio)
+          `)
+          .not('property_id', 'is', null)
+          .limit(200)
+      ]);
+
+      const salesData = salesRes.data;
+      const closedLeads = closedRes.data || [];
+      const assignedLeads = assignedRes.data || [];
 
       const salesMap = new Map<string, any>();
 
@@ -115,36 +137,11 @@ export default function Sales() {
         }
       });
 
-      // 2. Buscar clientes en estado 'closed' (GANADOS)
-      const { data: closedLeads, error: closedError } = await supabase
-        .from('leads')
-        .select(`
-          id, name, phone, email, status, sale_status, property_id, created_at,
-          property:inventory(id, numero_vivienda, modelo, precio)
-        `)
-        .eq('status', 'closed')
-        .limit(200);
-
-      console.log('[Ventas] closed leads:', closedLeads, closedError);
-
-      // 3. Buscar clientes con property_id asignado (cualquier estado)
-      const { data: assignedLeads, error: assignedError } = await supabase
-        .from('leads')
-        .select(`
-          id, name, phone, email, status, sale_status, property_id, created_at,
-          property:inventory(id, numero_vivienda, modelo, precio)
-        `)
-        .not('property_id', 'is', null)
-        .limit(200);
-
-      console.log('[Ventas] assigned leads (con vivienda):', assignedLeads, assignedError);
-
-      // Combinar closedLeads + assignedLeads sin duplicados, y sin repetir lo que ya está en salesMap
+      // Combinar closedLeads + assignedLeads sin duplicados en O(N) usando un Set
+      const closedIds = new Set(closedLeads.map((c: any) => c.id));
       const allLeads = [
-        ...(closedLeads || []),
-        ...(assignedLeads || []).filter(l => 
-          !(closedLeads || []).some((c: any) => c.id === l.id)
-        )
+        ...closedLeads,
+        ...assignedLeads.filter((l: any) => !closedIds.has(l.id))
       ];
 
       allLeads.forEach((l: any) => {
@@ -172,7 +169,6 @@ export default function Sales() {
       });
 
       const combinedSales = Array.from(salesMap.values()).filter(s => s.property);
-      console.log('[Ventas] combinedSales final:', combinedSales);
       setSales(combinedSales);
     } catch (err) {
       console.error('Error general al cargar operaciones de venta:', err);
@@ -208,20 +204,25 @@ export default function Sales() {
     }
   };
 
-  const filteredSales = sales.filter(sale => {
-    const matchesSearch = 
-      sale.lead?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.property?.numero_vivienda?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.property?.modelo?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || sale.sale_status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredSales = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return sales.filter(sale => {
+      const matchesSearch = 
+        sale.lead?.name?.toLowerCase().includes(term) ||
+        sale.property?.numero_vivienda?.toLowerCase().includes(term) ||
+        sale.property?.modelo?.toLowerCase().includes(term);
+      
+      const matchesStatus = statusFilter === 'all' || sale.sale_status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [sales, searchTerm, statusFilter]);
 
-  const totalClosedValue = (sales || [])
-    .filter(s => s.sale_status === 'completada')
-    .reduce((acc, curr) => acc + (curr.sale_price || 0), 0);
+  const totalClosedValue = useMemo(() => {
+    return (sales || [])
+      .filter(s => s.sale_status === 'completada')
+      .reduce((acc, curr) => acc + (curr.sale_price || 0), 0);
+  }, [sales]);
 
   if (isLoading) {
     return (

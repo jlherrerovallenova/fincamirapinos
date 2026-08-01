@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, FileText, Download, Eye, FileSpreadsheet, 
-  User, Home, Calendar, CheckCircle2, Key, Loader2, Sparkles
+  User, Home, Calendar, CheckCircle2, Key, Loader2, Sparkles, PenLine
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { 
@@ -67,8 +67,9 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
   }
 
   async function fetchProperties() {
+    const { sortInventoryProperties } = await import('../../hooks/useInventory');
     const { data } = await supabase.from('inventory').select('*');
-    if (data) setProperties(data);
+    if (data) setProperties(sortInventoryProperties(data));
   }
 
   const activeLead = leads.find(l => String(l.id) === String(selectedLeadId)) || initialLead;
@@ -120,7 +121,10 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
     };
   };
 
-  const handlePreview = () => {
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handlePreview = async () => {
     const data = buildContractData();
     if (!data) {
       alert('Por favor, selecciona un cliente y una vivienda para generar el documento.');
@@ -128,7 +132,7 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
     }
     setIsGenerating(true);
     try {
-      const blob = generatePDF(data, false);
+      const blob = await generatePDF(data, false);
       const url = URL.createObjectURL(blob);
       setPreviewBlobUrl(url);
     } catch (e: any) {
@@ -139,22 +143,33 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const data = buildContractData();
     if (!data) {
       alert('Por favor, selecciona un cliente y una vivienda.');
       return;
     }
-    generatePDF(data, true);
+    await generatePDF(data, true);
   };
 
-  const handleDownloadDOCX = () => {
+  const handleDownloadDOCX = async () => {
     const data = buildContractData();
     if (!data) {
       alert('Por favor, selecciona un cliente y una vivienda.');
       return;
     }
-    generateDOCX(data);
+    await generateDOCX(data);
+  };
+
+  const handleRequestSignature = async () => {
+    const data = buildContractData();
+    if (!data) {
+      alert('Por favor, selecciona un cliente y una vivienda.');
+      return;
+    }
+    const { signatureService } = await import('../../services/signatureService');
+    const { shareUrl: url } = await signatureService.createRequest(data);
+    setShareUrl(url);
   };
 
   if (!isOpen) return null;
@@ -383,6 +398,18 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
               </button>
             </div>
 
+            {/* BOTÓN SOLICITAR FIRMA DIGITAL TÁCTIL */}
+            <div className="pt-2">
+              <button
+                onClick={handleRequestSignature}
+                disabled={!activeLead || !activeProperty}
+                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 disabled:opacity-50"
+              >
+                <PenLine size={18} />
+                <span>Enviar para Firma Digital Táctil (Móvil/WhatsApp)</span>
+              </button>
+            </div>
+
           </div>
 
           {/* PANEL DERECHO: VISTA PREVIA DEL PDF (5 cols) */}
@@ -435,6 +462,59 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
         </div>
 
       </div>
+
+      {/* MODAL OVERLAY PARA COMPARTIR ENLACE DE FIRMA */}
+      {shareUrl && (
+        <div className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <PenLine size={28} />
+            </div>
+
+            <h3 className="text-lg font-bold text-center mb-1">Enlace de Firma Generado</h3>
+            <p className="text-xs text-slate-400 text-center mb-6">
+              El cliente puede abrir este enlace desde su teléfono móvil para revisar y firmar el contrato con el dedo.
+            </p>
+
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex items-center gap-2 mb-6">
+              <input
+                type="text"
+                readOnly
+                value={shareUrl}
+                className="bg-transparent flex-1 text-xs text-emerald-400 font-mono outline-none truncate"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl transition-all"
+              >
+                {isCopied ? '¡Copiado!' : 'Copiar'}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <a
+                href={`https://wa.me/${activeLead?.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`Hola ${activeLead?.name || ''}, te enviamos el contrato para su revisión y firma digital táctil: ${shareUrl}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all"
+              >
+                <span>Enviar por WhatsApp</span>
+              </a>
+
+              <button
+                onClick={() => setShareUrl(null)}
+                className="w-full py-2.5 text-slate-400 hover:text-white text-xs font-medium rounded-xl transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
