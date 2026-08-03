@@ -424,12 +424,7 @@ export async function generatePDF(data: ContractData, download: boolean = true):
     doc.setFontSize(15);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('FINCA MIRAPINOS', margin, 12);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(148, 163, 184);
-    doc.text('Gestión Inmobiliaria Residencial', margin, 18);
+    doc.text('FINCA MIRAPINOS', margin, 14);
     
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
@@ -448,7 +443,7 @@ export async function generatePDF(data: ContractData, download: boolean = true):
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
     doc.text(title.toUpperCase(), margin + 3, y + 5);
-    y += 11;
+    y += 14; // Aumentado el margen inferior de la sección para dar más espacio al siguiente párrafo
   };
 
   const addParagraph = (text: string, size = 9, bold = false) => {
@@ -456,15 +451,19 @@ export async function generatePDF(data: ContractData, download: boolean = true):
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
     doc.setTextColor(30, 41, 59);
     const lines = doc.splitTextToSize(text, contentW);
-    lines.forEach((line: string) => {
-      if (y > 270) { doc.addPage(); y = 25; }
-      doc.text(line, margin, y);
-      y += size * 0.45 + 1;
-    });
-    y += 1.5;
+    const actualLineHeight = size * 0.3528 * 1.5; // 1pt = 0.3528mm, factor = 1.5
+    const totalHeight = lines.length * actualLineHeight;
+    
+    if (y + totalHeight > 270) { 
+      doc.addPage(); 
+      y = 25; 
+    }
+    
+    doc.text(text, margin, y, { maxWidth: contentW, align: 'justify', lineHeightFactor: 1.5 });
+    y += totalHeight + 3;
   };
 
-  const addKeyValue = (key: string, value: string) => {
+  const addKeyValue = (key: string, value: string, offset: number = 45) => {
     if (y > 270) { doc.addPage(); y = 25; }
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
@@ -473,8 +472,8 @@ export async function generatePDF(data: ContractData, download: boolean = true):
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
-    const valueLines = doc.splitTextToSize(value, contentW - 45);
-    doc.text(valueLines, margin + 45, y);
+    const valueLines = doc.splitTextToSize(value, contentW - offset);
+    doc.text(valueLines, margin + offset, y);
     y += Math.max(valueLines.length * 4.5, 5);
   };
 
@@ -499,54 +498,54 @@ export async function generatePDF(data: ContractData, download: boolean = true):
   };
 
   if (data.tipoDocumento === 'reserva') {
-    drawHeader('CONTRATO DE RESERVA');
+    drawHeader('DOCUMENTO PRIVADO DE RESERVA DE VIVIENDA');
     
     addParagraph(`En Valladolid, a ${data.fecha}.`, 9, true);
 
-    addSectionTitle('1. Partes Intervinientes');
-    addKeyValue('De una parte (Vendedora)', 'RESIDENCIAL MIRAPINOS, S.L., con CIF B-00000000 y domicilio en Paseo de Zorrilla 98, Valladolid.');
-    
+    addSectionTitle('REUNIDOS');
     const compradorStr = data.comprador.nombreCotitular
-      ? `D/Dª. ${data.comprador.nombre} (DNI ${data.comprador.dni}) y D/Dª. ${data.comprador.nombreCotitular} (DNI ${data.comprador.dniCotitular || '_______'}), domicilio en ${data.comprador.domicilio || 'N/A'}, ${data.comprador.localidad || ''}.`
-      : `D/Dª. ${data.comprador.nombre}, con DNI ${data.comprador.dni}, estado civil ${data.comprador.estadoCivil || 'Soltero/a'}, domicilio en ${data.comprador.domicilio || 'N/A'}, ${data.comprador.localidad || ''}.`;
-    addKeyValue('De otra parte (Compradora)', compradorStr);
+      ? `De una parte, D/Dª. ${data.comprador.nombre}, con NIF nº ${data.comprador.dni} y D/Dª. ${data.comprador.nombreCotitular}, con NIF nº ${data.comprador.dniCotitular || '_______'}, con domicilio en ${data.comprador.domicilio || 'N/A'} de ${data.comprador.localidad || ''} (${data.comprador.provincia || ''}). Teléfono de contacto ${data.comprador.telefono || ''}. (en adelante, "LOS INTERESADOS").`
+      : `De una parte, D/Dª. ${data.comprador.nombre}, con NIF nº ${data.comprador.dni}, con domicilio en ${data.comprador.domicilio || 'N/A'} de ${data.comprador.localidad || ''} (${data.comprador.provincia || ''}). Teléfono de contacto ${data.comprador.telefono || ''}. (en adelante, "LOS INTERESADOS").`;
+    addParagraph(compradorStr);
+    addParagraph('Y de otra parte, D. Fernando Sendra Gutiérrez, con DNI 13.751.941-B actuando en nombre y representación de la entidad TERRA SATIS, S.L., con CIF B47773585, y domicilio social en Valladolid, Paseo Arco Ladrillo Nº 68, 3ª planta, en su calidad de promotora del conjunto residencial "Mirapinos, Casas de Campo" (en adelante, "EL PROMOTOR").');
 
-    addSectionTitle('2. Inmueble Objeto de Reserva');
-    addKeyValue('Vivienda', `Nº ${data.propiedad.numeroVivienda} ${data.propiedad.modelo ? `(Modelo ${data.propiedad.modelo})` : ''}`);
-    addKeyValue('Características', `${data.propiedad.dormitorios || 0} dormitorios, ${data.propiedad.banos || 0} baños, ${data.propiedad.superficieUtil || 0} m² útiles / ${data.propiedad.superficieConstruida || 0} m² construidos.`);
-    addKeyValue('Anexos', `Garaje: ${data.propiedad.garaje || 'Incluido'} | Trastero: ${data.propiedad.trastero || 'Incluido'}`);
+    addSectionTitle('EXPONEN');
+    addParagraph('Que LOS INTERESADOS han manifestado su voluntad de adquirir una de las viviendas unifamiliares de la promoción "Mirapinos, Casas de Campo", ubicada en el término municipal de Simancas (Valladolid), Sector SUD Nº 10 del PGOU.');
+    addParagraph('Que EL PROMOTOR manifiesta su conformidad en reservar provisionalmente dicha vivienda, bajo las siguientes:');
 
-    addSectionTitle('3. Condiciones Económicas');
-    const ivaPct = (data.porcentajeIva || 10) / 100;
-    const precioBase = data.propiedad.precio;
-    const ivaMonto = precioBase * ivaPct;
-    const precioTotal = precioBase + ivaMonto;
+    addSectionTitle('CLÁUSULAS');
+    addParagraph('Primera. - Objeto', 9, true);
+    addParagraph('El presente documento tiene por objeto la reserva provisional de la siguiente vivienda:');
+    addKeyValue('Vivienda Nº', data.propiedad.numeroVivienda, 75);
+    addKeyValue('Superficie construida', `${data.propiedad.superficieConstruida || 0} m²`, 75);
+    addKeyValue('Precio base de venta (IVA no incluido)', formatEur(data.propiedad.precio), 75);
+
+    addParagraph('Segunda. - Entrega de cantidad en concepto de reserva', 9, true);
     const reservaMonto = data.importeReserva || 6000;
+    addParagraph(`EL INTERESADO entrega en este acto la cantidad de ${formatEur(reservaMonto)} en concepto de señal, mediante:`);
+    addParagraph('Transferencia bancaria a la cuenta bloqueada abierta a nombre de EL PROMOTOR en Caja Rural de Zamora, ES72-3085-0102-0428-1323-0220 justificante de ingreso bancario adjunto.');
 
-    addKeyValue('Precio base (sin IVA)', formatEur(precioBase));
-    addKeyValue('IVA (10%)', formatEur(ivaMonto));
-    addKeyValue('Precio final con IVA', `${formatEur(precioTotal)} (${numeroALetras(precioTotal)} EUROS)`);
-    addKeyValue('Importe Señal Reserva', `${formatEur(reservaMonto)} (${numeroALetras(reservaMonto)} EUROS)`);
+    addParagraph('Tercera. - Plazo de reserva', 9, true);
+    addParagraph('La presente reserva tiene una duración de NUEVE (9) MESES, prorrogables de forma automática por TRES (3) MESES adicionales salvo renuncia expresa y por escrito de cualquiera de las partes antes del vencimiento del plazo inicial.');
 
-    addSectionTitle('4. Cláusulas y Compromisos');
-    addParagraph(
-      `PRIMERA.- El COMPRADOR entrega en este acto a la VENDEDORA la cantidad de ${formatEur(reservaMonto)} en concepto de señal de reserva para la adquisición de la vivienda descrita.`,
-      8.5
-    );
-    addParagraph(
-      'SEGUNDA.- El presente documento concede al COMPRADOR un derecho preferente de adquisición sobre el inmueble hasta la firma del correspondiente Contrato Privado de Compraventa.',
-      8.5
-    );
-    addParagraph(
-      'TERCERA (RGPD).- En cumplimiento del Reglamento General de Protección de Datos, las partes consienten el tratamiento de sus datos personales para la correcta gestión de la transacción inmobiliaria.',
-      8.5
-    );
+    addParagraph('Cuarta. - Compromiso de venta', 9, true);
+    addParagraph('Durante el plazo de vigencia de esta reserva, EL PROMOTOR se compromete a no ofrecer ni vender la vivienda objeto de reserva a terceros.');
+    addParagraph('La presente reserva no implica obligación contractual de compraventa para ninguna de las partes. La compraventa definitiva quedará sujeta a la obtención de licencia de obras, aprobación del proyecto de ejecución, y firma de contrato privado posterior.');
+
+    addParagraph('Quinta. - Devolución de la reserva', 9, true);
+    addParagraph('Si no se formalizase contrato de compraventa dentro del plazo indicado, por decisión o imposibilidad imputable al PROMOTOR, este se obliga a devolver íntegramente la cantidad entregada en un plazo máximo de 15 días naturales.');
+    addParagraph('Si la causa de no formalización fuese imputable a los INTERESADOS (renuncia sin causa justificada), este perderá la cantidad entregada como compensación de daños y perjuicios, salvo pacto en contrario.');
+    addParagraph('En caso de desistimiento del proyecto por insuficiencia de reservas, EL PROMOTOR devolverá íntegramente los importes recibidos, sin penalización alguna, conforme al contrato de comercialización.');
+
+    addParagraph('Sexta. - Protección de datos', 9, true);
+    addParagraph('Ambas partes se obligan a cumplir la normativa de protección de datos personales, haciendo uso de la información solo a efectos de gestión de la reserva.');
+    addParagraph('Y para que así conste, firman el presente documento por duplicado ejemplar y a un solo efecto, en el lugar y fecha arriba indicados.');
 
     addSignaturesBlock(
-      'La Parte Vendedora',
-      'La Parte Compradora',
-      'RESIDENCIAL MIRAPINOS, S.L.',
-      data.comprador.nombre
+      'LOS INTERESADOS',
+      'EL PROMOTOR',
+      'Firma:',
+      'Firma: TERRA SATIS, S.L.'
     );
   }
 

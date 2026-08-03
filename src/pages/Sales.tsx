@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../utils/formatCurrency';
+import { DocumentGeneratorModal } from '../components/documents/DocumentGeneratorModal';
 
 interface SaleItem {
   id: string;
@@ -75,6 +76,7 @@ export default function Sales() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedSaleForDoc, setSelectedSaleForDoc] = useState<SaleItem | null>(null);
 
   useEffect(() => {
     fetchSales();
@@ -415,6 +417,14 @@ export default function Sales() {
                           >
                             Ver Ficha
                           </button>
+                          <button
+                            className="text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-100 px-2.5 py-1.5 rounded-xl transition-colors shadow-sm flex items-center gap-1.5"
+                            onClick={() => setSelectedSaleForDoc(sale)}
+                            title="Generar Contrato"
+                          >
+                            <FileText size={12} />
+                            Generar Contrato
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -428,6 +438,14 @@ export default function Sales() {
           <p>Mostrando {filteredSales.length} de {sales.length} operaciones</p>
         </div>
       </div>
+
+      <DocumentGeneratorModal
+        isOpen={!!selectedSaleForDoc}
+        onClose={() => setSelectedSaleForDoc(null)}
+        initialLead={selectedSaleForDoc?.lead}
+        initialProperty={selectedSaleForDoc?.property}
+        lockSelection={true}
+      />
     </div>
   );
 }

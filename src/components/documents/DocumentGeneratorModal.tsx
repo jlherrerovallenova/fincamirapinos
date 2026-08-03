@@ -19,13 +19,15 @@ interface Props {
   onClose: () => void;
   initialLead?: any;
   initialProperty?: any;
+  lockSelection?: boolean;
 }
 
 export const DocumentGeneratorModal: React.FC<Props> = ({
   isOpen,
   onClose,
   initialLead,
-  initialProperty
+  initialProperty,
+  lockSelection
 }) => {
   const [docType, setDocType] = useState<DocumentType>('reserva');
   const [leads, setLeads] = useState<any[]>([]);
@@ -207,8 +209,6 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
                 {[
                   { id: 'reserva', label: 'Contrato Reserva', icon: FileText, desc: 'Señal y reserva de preferencia' },
                   { id: 'compraventa', label: 'Contrato Compraventa', icon: CheckCircle2, desc: 'Acuerdo definitivo privado' },
-                  { id: 'visita', label: 'Hoja de Visita', icon: Eye, desc: 'Registro de visita y RGPD' },
-                  { id: 'entrega_llaves', label: 'Acta Entrega Llaves', icon: Key, desc: 'Posesión y lecturas de luz/agua' },
                 ].map(item => {
                   const Icon = item.icon;
                   const active = docType === item.id;
@@ -244,7 +244,8 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
                 <select
                   value={selectedLeadId}
                   onChange={e => { setSelectedLeadId(e.target.value); setPreviewBlobUrl(null); }}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={lockSelection}
                 >
                   <option value="">-- Seleccionar Cliente --</option>
                   {leads.map(l => (
@@ -260,7 +261,8 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
                 <select
                   value={selectedPropertyId}
                   onChange={e => { setSelectedPropertyId(e.target.value); setPreviewBlobUrl(null); }}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={lockSelection}
                 >
                   <option value="">-- Seleccionar Vivienda --</option>
                   {properties.map(p => (
@@ -370,43 +372,44 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* BOTÓN PREVISUALIZAR Y DESCARGAR */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            {/* BOTONES DE ACCIÓN */}
+            <div className="flex flex-col gap-2.5 pt-3">
               <button
                 onClick={handlePreview}
                 disabled={isGenerating || !activeLead || !activeProperty}
-                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
                 Previsualizar PDF en Pantalla
               </button>
 
-              <button
-                onClick={handleDownloadPDF}
-                disabled={!activeLead || !activeProperty}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
-              >
-                <Download size={16} /> Descargar PDF Oficial
-              </button>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={!activeLead || !activeProperty}
+                  className="py-3 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-800 text-sm font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all border border-emerald-200 hover:border-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Download size={15} />
+                  Descargar PDF
+                </button>
 
-              <button
-                onClick={handleDownloadDOCX}
-                disabled={!activeLead || !activeProperty}
-                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
-              >
-                <FileSpreadsheet size={16} /> Descargar Word (DOCX)
-              </button>
-            </div>
+                <button
+                  onClick={handleDownloadDOCX}
+                  disabled={!activeLead || !activeProperty}
+                  className="py-3 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-800 text-sm font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all border border-emerald-200 hover:border-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <FileSpreadsheet size={15} />
+                  Descargar Word
+                </button>
+              </div>
 
-            {/* BOTÓN SOLICITAR FIRMA DIGITAL TÁCTIL */}
-            <div className="pt-2">
               <button
                 onClick={handleRequestSignature}
                 disabled={!activeLead || !activeProperty}
-                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 disabled:opacity-50"
+                className="w-full py-3 bg-emerald-900 hover:bg-emerald-950 active:bg-black text-white text-sm font-semibold rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <PenLine size={18} />
-                <span>Enviar para Firma Digital Táctil (Móvil/WhatsApp)</span>
+                <PenLine size={16} />
+                Enviar para Firma Digital Táctil
               </button>
             </div>
 
