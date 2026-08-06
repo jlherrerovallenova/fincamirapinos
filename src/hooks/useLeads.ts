@@ -1,11 +1,7 @@
 // src/hooks/useLeads.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import type { Database } from '../types/supabase';
-
-type Lead = Database['public']['Tables']['leads']['Row'];
-type LeadUpdate = Database['public']['Tables']['leads']['Update'];
-type LeadInsert = Database['public']['Tables']['leads']['Insert'];
+import type { Lead, LeadUpdate, LeadInsert } from '../types/crm';
 
 export const LEADS_QUERY_KEY = ['leads'];
 
@@ -15,7 +11,7 @@ interface FetchLeadsParams {
   searchTerm?: string;
   statusFilter?: string;
   sourceFilter?: string;
-  sortField?: string;
+  sortField?: keyof Lead;
   sortDirection?: 'asc' | 'desc';
 }
 
@@ -32,23 +28,19 @@ export function useLeads(params: FetchLeadsParams) {
         .from('leads')
         .select('*', { count: 'exact' });
 
-      // Apply sorting
-      query = query.order(sortField as any, { ascending: sortDirection === 'asc' });
+      query = query.order(sortField, { ascending: sortDirection === 'asc' });
 
-      // Apply search
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
 
-      // Apply filters
       if (statusFilter) {
         query = query.eq('status', statusFilter);
       }
       if (sourceFilter) {
         query = query.ilike('source', `%${sourceFilter}%`);
       }
-      
-      // Añadir abort signal
+
       query = query.abortSignal(signal);
 
       const { data, error, count } = await query.range(from, to);
@@ -56,7 +48,7 @@ export function useLeads(params: FetchLeadsParams) {
       if (error) throw error;
 
       return {
-        leads: (data || []) as unknown as Lead[],
+        leads: data || [],
         totalCount: count || 0
       };
     }
@@ -68,19 +60,21 @@ export function useUpdateLead() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: LeadUpdate }) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('leads')
-        .update(updates as any)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as Lead;
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: LEADS_QUERY_KEY });
-      queryClient.setQueryData(['lead', data.id], data);
+      if (data?.id) {
+        queryClient.setQueryData(['lead', data.id], data);
+      }
     }
   });
 }
@@ -90,14 +84,14 @@ export function useCreateLead() {
 
   return useMutation({
     mutationFn: async (newLead: LeadInsert) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('leads')
         .insert([newLead])
         .select()
         .single();
 
       if (error) throw error;
-      return data as Lead;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LEADS_QUERY_KEY });
@@ -110,7 +104,7 @@ export function useDeleteLead() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('leads')
         .delete()
         .eq('id', id);

@@ -1,17 +1,15 @@
+// src/services/dashboardService.ts
 import { supabase } from '../lib/supabase';
-import type { Database } from '../types/supabase';
-
-export type AgendaItem = Database['public']['Tables']['agenda']['Row'] & {
-  leads?: { name: string } | null;
-};
-
-export type EmailTrackingItem = any;
+import type { AgendaItem, EmailTrackingItem, SourceStat } from '../types/crm';
 
 export const dashboardService = {
   async getLeadsStats() {
     const { data, error } = await supabase.rpc('get_dashboard_stats');
     if (error) throw error;
-    return data as { totalLeads: number; topSources: { name: string; count: number; percentage: number }[] };
+    return (data || { totalLeads: 0, topSources: [] }) as unknown as {
+      totalLeads: number;
+      topSources: SourceStat[];
+    };
   },
 
   async getRecentLeads(limit = 5) {
@@ -59,7 +57,7 @@ export const dashboardService = {
   },
 
   async toggleAgendaStatus(id: number, completed: boolean) {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('agenda')
       .update({ completed })
       .eq('id', id);
@@ -67,7 +65,7 @@ export const dashboardService = {
   },
 
   async deleteAgendaItem(id: number) {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('agenda')
       .delete()
       .eq('id', id);
@@ -80,7 +78,7 @@ export const dashboardService = {
       .from('leads')
       .select('id, name, email, source, created_at, status, feedback_sent, feedback_rating, feedback_responded_at')
       .or('status.in.(visiting,closed),feedback_rating.not.is.null');
-    
+
     if (!error && data) {
       feedbackData = data;
     } else {
