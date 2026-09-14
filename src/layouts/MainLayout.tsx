@@ -23,8 +23,7 @@ import {
   Clock,
   BarChart3,
   TrendingUp,
-  BadgeDollarSign,
-  FileText
+  BadgeDollarSign
 } from 'lucide-react';
 import { useAgendaAlerts } from '../hooks/useAgendaAlerts';
 

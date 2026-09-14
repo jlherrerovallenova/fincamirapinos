@@ -21,6 +21,7 @@ import CreatePropertyModal from '../components/inventory/CreatePropertyModal';
 import { useDialog } from '../context/DialogContext';
 import { generatePaymentPlanPDF } from '../utils/documentGenerator';
 import { sortInventoryProperties } from '../hooks/useInventory';
+import { formatCurrency } from '../utils/formatCurrency';
 
 interface Property {
   id: number;
@@ -202,7 +203,7 @@ export default function Inventory() {
       `${p.superficie_util} m²`,
       `${p.superficie_construida} m²`,
       `${p.habitaciones} / ${p.banos}`,
-      new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(p.precio || 0),
+      formatCurrency(p.precio || 0),
       (p.estado_vivienda || 'DISPONIBLE').toUpperCase()
     ]);
 
@@ -434,7 +435,7 @@ export default function Inventory() {
                           </div>
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-900 text-center">
-                          {property.precio ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(property.precio) : '-'}
+                          {property.precio ? formatCurrency(property.precio) : '-'}
                         </td>
                         <td className="py-4 px-6 text-center">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${

@@ -82,9 +82,9 @@ export default function Leads() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Estados de Búsqueda y Filtros sincronizados con la URL
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || '');
-  const [sourceFilter, setSourceFilter] = useState<string>(searchParams.get('source') || '');
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
+  const [statusFilter, setStatusFilter] = useState<string>(() => searchParams.get('status') || '');
+  const [sourceFilter, setSourceFilter] = useState<string>(() => searchParams.get('source') || '');
 
   // Estados de Paginación
   const [page, setPage] = useState(1);

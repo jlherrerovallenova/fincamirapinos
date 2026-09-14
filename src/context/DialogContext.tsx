@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, type ReactNode } from 'react';
+import { createContext, useState, useContext, useCallback, useMemo, type ReactNode } from 'react';
 import { AlertTriangle, Info, X } from 'lucide-react';
 
 interface DialogOptions {
@@ -29,7 +29,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
         message: ''
     });
 
-    const showConfirm = (options: DialogOptions): Promise<boolean> => {
+    const showConfirm = useCallback((options: DialogOptions): Promise<boolean> => {
         return new Promise((resolve) => {
             setDialog({
                 isOpen: true,
@@ -40,9 +40,9 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                 cancelText: options.cancelText || 'Cancelar'
             });
         });
-    };
+    }, []);
 
-    const showAlert = (options: DialogOptions): Promise<void> => {
+    const showAlert = useCallback((options: DialogOptions): Promise<void> => {
         return new Promise((resolve) => {
             setDialog({
                 isOpen: true,
@@ -53,17 +53,21 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                 confirmText: options.confirmText || 'Entendido'
             });
         });
-    };
+    }, []);
 
-    const handleClose = (value: boolean) => {
-        setDialog((prev) => ({ ...prev, isOpen: false }));
-        if (dialog.resolve) {
-            dialog.resolve(value);
-        }
-    };
+    const handleClose = useCallback((value: boolean) => {
+        setDialog((prev) => {
+            if (prev.resolve) {
+                prev.resolve(value);
+            }
+            return { ...prev, isOpen: false };
+        });
+    }, []);
+
+    const contextValue = useMemo(() => ({ showConfirm, showAlert }), [showConfirm, showAlert]);
 
     return (
-        <DialogContext.Provider value={{ showConfirm, showAlert }}>
+        <DialogContext.Provider value={contextValue}>
             {children}
 
             {dialog.isOpen && (

@@ -1121,6 +1121,7 @@ export default function SaleTab({ lead, onLeadUpdate }: Props) {
                     src={previewUrl}
                     title={previewName || 'Vista previa PDF'}
                     className="w-full h-full rounded-xl border border-slate-200/60 shadow-lg bg-white"
+                    sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
                   />
                 )}
                 

@@ -118,6 +118,7 @@ const Settings: React.FC = () => {
                 src={previewUrl}
                 className="w-full h-full border-none shadow-inner"
                 title="Document Preview"
+                sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
               />
             </div>
           </div>

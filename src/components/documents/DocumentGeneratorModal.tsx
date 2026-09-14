@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, FileText, Download, Eye, FileSpreadsheet, 
-  User, Home, Calendar, CheckCircle2, Key, Loader2, Sparkles, PenLine
+  User, Home, Calendar, CheckCircle2, Loader2, Sparkles, PenLine
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { 
@@ -434,6 +434,7 @@ export const DocumentGeneratorModal: React.FC<Props> = ({
                   src={previewBlobUrl}
                   className="w-full h-full border-0 rounded-xl"
                   title="Vista Previa PDF"
+                  sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
                 />
               ) : (
                 <div className="p-6 text-center text-slate-400 space-y-3">

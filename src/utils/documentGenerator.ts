@@ -88,14 +88,16 @@ export interface DatosReserva {
   importeReserva: number;
 }
 
+const eurFormatter = new Intl.NumberFormat('es-ES', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  useGrouping: true,
+});
+
 export function formatEur(n: number = 0): string {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-  }).format(n);
+  return eurFormatter.format(n);
 }
 
 export function numeroALetras(n: number = 0): string {
