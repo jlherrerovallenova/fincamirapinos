@@ -17,6 +17,7 @@ import { supabase } from '../../lib/supabase';
 import { useDialog } from '../../context/DialogContext';
 import { useAuth } from '../../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { sanitizeStorageFileName } from '../../utils/sanitizeFileName';
 
 // Importamos la imagen de la firma (asegúrate de que la ruta sea correcta según tu estructura)
 // import firmaImg from '../../../assets/Firma.png';
@@ -205,7 +206,8 @@ export default function EmailComposerModal({
 
     setLoading(true);
     try {
-      const fileName = `${Date.now()}_${file.name}`;
+      const cleanName = sanitizeStorageFileName(file.name);
+      const fileName = `${Date.now()}_${cleanName}`;
       const filePath = `clientes/${leadId}/${fileName}`;
       
       const { error } = await supabase.storage

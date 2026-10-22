@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { generarReservaPdf, generarReservaDocx, type DatosReserva } from '../../utils/generarReserva';
+import { sanitizeStorageFileName } from '../../utils/sanitizeFileName';
 import type { Database } from '../../types/supabase';
 
 type Lead = Database['public']['Tables']['leads']['Row'];
@@ -127,7 +128,7 @@ export default function SaleTab({ lead, onLeadUpdate }: Props) {
 
     setUploadingSlot(type);
     try {
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const cleanFileName = sanitizeStorageFileName(file.name);
       const filePath = `${sale.id}/${type}_${Date.now()}_${cleanFileName}`;
 
       const { error: storageError } = await supabase.storage

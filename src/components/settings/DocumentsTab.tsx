@@ -18,6 +18,7 @@ import { useDialog } from '../../context/DialogContext';
 import { useDocuments, DOCUMENT_CATEGORIES } from '../../hooks/useDocuments';
 import type { SystemDocument } from '../../hooks/useDocuments';
 import { useQueryClient } from '@tanstack/react-query';
+import { sanitizeStorageFileName } from '../../utils/sanitizeFileName';
 
 interface DocumentsTabProps {
   onPreview: (url: string) => void;
@@ -58,9 +59,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ onPreview }) => {
     setIsUploading(true);
     try {
       const duplicateFiles: string[] = [];
+      const errorFiles: { name: string; error: string }[] = [];
 
       const uploadPromises = Array.from(files).map(async (file) => {
-        const fullPath = `${uploadCategory}/${file.name}`;
+        const cleanName = sanitizeStorageFileName(file.name);
+        const fullPath = uploadCategory === 'Sin Categorizar' ? cleanName : `${uploadCategory}/${cleanName}`;
         const { error } = await supabase.storage.from('documents').upload(fullPath, file);
 
         if (error) {
@@ -68,6 +71,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ onPreview }) => {
             duplicateFiles.push(file.name);
           } else {
             console.error(`Error al subir ${file.name}:`, error);
+            errorFiles.push({ name: file.name, error: error.message });
           }
         }
       });
@@ -78,6 +82,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ onPreview }) => {
         await showAlert({
           title: 'Atención',
           message: `Se subieron los archivos, pero los siguientes ya existían y se omitieron:\n\n${duplicateFiles.join(', ')}`
+        });
+      }
+
+      if (errorFiles.length > 0) {
+        await showAlert({
+          title: 'Error al subir',
+          message: `No se pudieron subir los siguientes archivos:\n\n${errorFiles.map(e => `• ${e.name}: ${e.error}`).join('\n')}`
         });
       }
 
@@ -128,7 +139,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ onPreview }) => {
     }
 
     try {
-      const newFullPath = `${oldDoc.category}/${newName}`;
+      const cleanNewName = sanitizeStorageFileName(newName);
+      const newFullPath = oldDoc.category === 'Sin Categorizar' ? cleanNewName : `${oldDoc.category}/${cleanNewName}`;
       const { error } = await supabase.storage.from('documents').move(oldDoc.fullPath, newFullPath);
       if (error) throw error;
 
